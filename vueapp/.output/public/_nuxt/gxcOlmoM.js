@@ -1,1 +1,0 @@
-import{r as l}from"./CHeRJYPu.js";const e=l({isOpen:!1,title:"",message:"",type:"info"}),p=()=>({dialogState:e,openDialog:(o,a="通知",s="info")=>{e.value.message=o,e.value.title=a,e.value.type=s,e.value.isOpen=!0},closeDialog:()=>{e.value.isOpen=!1}});export{p as u};

@@ -1,1 +1,0 @@
-import{r}from"./CHeRJYPu.js";const e=r({isOpen:!1,title:"",message:"",resolve:null}),t=()=>({confirmDialogState:e,openConfirmDialog:(l,o="確認")=>(e.value.message=l,e.value.title=o,e.value.isOpen=!0,new Promise(s=>{e.value.resolve=s})),closeConfirmDialog:l=>{e.value.resolve&&e.value.resolve(l),e.value.isOpen=!1,e.value.resolve=null}});export{t as u};

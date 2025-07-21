@@ -209,6 +209,8 @@ __marimo__/
 # nodejs
 node_modules/
 .nuxt/
+vueapp/.output/
+vueapp/dist
 
 # CDK
 !cdk/lib
