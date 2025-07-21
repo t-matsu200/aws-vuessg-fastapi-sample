@@ -1,0 +1,16 @@
+services:
+  cdk-deploy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cdk-deploy-env
+    container_name: cdk-deploy-container
+    working_dir: /app/cdk
+    volumes:
+      - type: bind
+        source: ../
+        target: /app
+    env_file:
+      - ./.env
+    tty: true
+    stdin_open: true
