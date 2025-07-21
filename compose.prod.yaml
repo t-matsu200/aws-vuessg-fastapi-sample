@@ -1,0 +1,19 @@
+services:
+  nginx:
+    build:
+      context: ./vueapp
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - pythonapp
+
+  pythonapp:
+    build:
+      context: ./pythonapp
+      dockerfile: Dockerfile
+    container_name: pythonapp
+    ports:
+      - "8000:8000"
+    environment:
+      - CORS_ORIGINS=http://localhost,http://127.0.0.1

@@ -1,0 +1,5 @@
+node_modules/
+.nuxt/
+
+__pycache__/
+.venv/

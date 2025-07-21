@@ -1,0 +1,57 @@
+services:
+  frontend:
+    image: node:24-alpine
+    working_dir: /app
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NUXT_HOST=0.0.0.0
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - type: bind
+        source: ./vueapp
+        target: /app
+      - type: volume
+        source: aws-vuessg-fastapi-sample-node-modules
+        target: /app/node_modules
+    command: ["sh", "./start-dev.sh"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  backend:
+    build:
+      context: ./pythonapp
+      dockerfile: Dockerfile
+    container_name: backend
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=development
+    depends_on:
+      frontend:
+        condition: service_healthy
+    volumes:
+      - type: bind
+        source: ./pythonapp
+        target: /app
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    ports:
+      - "80:80"
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_started
+
+volumes:
+  aws-vuessg-fastapi-sample-node-modules:
