@@ -1,0 +1,47 @@
+:root {
+  --color-primary: #4A90E2;
+  --color-secondary: #8BC34A;
+  --color-text-dark: #333333;
+  --color-text-light: #F8F8F8;
+  --color-text-placeholder: #999999;
+  --color-background-light: #F5F5F5;
+  --color-border: #E0E0E0;
+  --color-error: #D32F2F;
+  --color-error-background: #ffebeb;
+}
+
+html {
+  box-sizing: border-box;
+  font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  color: var(--color-text-dark);
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* 横スクロールバーを非表示 */
+  background-color: var(--color-background-light);
+}
+
+/* Reset default margins and paddings */
+h1, h2, h3, h4, h5, h6, p, ul, ol, li, figure, figcaption, blockquote, dl, dd {
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
