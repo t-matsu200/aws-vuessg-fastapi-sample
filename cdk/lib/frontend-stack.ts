@@ -38,6 +38,8 @@ export class FrontendStack extends cdk.Stack {
 
     const systemName = this.node.tryGetContext('systemName');
 
+    const serverAccessLogsBucket = this.createServerAccessLogsBucket(systemName);
+
     // TODO: ALBのFQDNと同名のS3バケットを作成する必要があります
     // https://aws.amazon.com/jp/blogs/news/internal-static-web-hosting/
     // フロントエンドアプリケーションをホストするためのS3バケットを作成します。
@@ -45,12 +47,40 @@ export class FrontendStack extends cdk.Stack {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL, // バケットがパブリックにアクセスできないようにします。
       removalPolicy: cdk.RemovalPolicy.DESTROY, // スタック削除時にバケットとそのコンテンツを自動的に破棄します。
       autoDeleteObjects: true, // バケットが破棄されたときにオブジェクトを自動的に削除します。
+      serverAccessLogsBucket: serverAccessLogsBucket,
     });
 
     // アクセスを制限し、CDK操作を許可するためにバケットポリシーを適用します。
     this.createBucketPolicies(props.s3EndpointId);
     // 重要なスタックリソースのCloudFormation出力を作成します。
     this.createCfnOutputs(systemName);
+  }
+
+  /**
+   * S3サーバーアクセスログを保存するバケットを作成します。
+   * @param {string} systemName リソース命名に使用されるシステム名。
+   * @returns {s3.Bucket} 作成されたS3バケット。
+   */
+  private createServerAccessLogsBucket(systemName: string): s3.Bucket {
+    return new s3.Bucket(this, `${systemName}-FrontendS3AccessLogsBucket`, {
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      // 30日経過したら、コールドストレージに移動する
+      lifecycleRules: [
+        {
+          id: 'ArchiveAndThenDelete',
+          enabled: true,
+          transitions: [
+            {
+              storageClass: s3.StorageClass.GLACIER,
+              transitionAfter: cdk.Duration.days(30),
+            },
+          ],
+          expiration: cdk.Duration.days(365),
+        },
+      ],
+    });
   }
 
   /**

@@ -5,6 +5,7 @@ import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as elbv2_targets from 'aws-cdk-lib/aws-elasticloadbalancingv2-targets';
 import * as cr from 'aws-cdk-lib/custom-resources';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import { AppConstants } from './app-constants';
 
 /**
@@ -55,6 +56,9 @@ export class AlbStack extends cdk.Stack {
     // 内部ALBとそれに関連するセキュリティグループを作成します。
     this.createAlbAndSecurityGroup(systemName, vpc);
 
+    // ALBのアクセスログを有効にします。
+    this.enableAccessLogs(systemName);
+
     // S3とAPI Gatewayのターゲットグループを作成し、それぞれのVPCエンドポイントにマッピングします。
     const { s3TargetGroup, apiGatewayTargetGroup } = this.createTargetGroups(systemName, vpc, props.s3EndpointId, props.apiGatewayEndpointId);
 
@@ -103,6 +107,35 @@ export class AlbStack extends cdk.Stack {
         this.albSg.addIngressRule(ec2.Peer.ipv4(vpc.vpcCidrBlock), ec2.Port.tcp(80), 'Allow HTTP traffic from VPC');
     // セキュリティグループをALBに関連付けます。
     this.internalAlb.addSecurityGroup(this.albSg);
+  }
+
+  /**
+   * ALBのアクセスログを有効にします。
+   * @param {string} systemName リソース命名に使用されるシステム名。
+   */
+  private enableAccessLogs(systemName: string) {
+    const logBucket = new s3.Bucket(this, `${systemName}-AlbAccessLogsBucket`, {
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      // 30日経過したら、コールドストレージに移動する
+      lifecycleRules: [
+        {
+          id: 'ArchiveAndThenDelete',
+          enabled: true,
+          transitions: [
+            {
+              storageClass: s3.StorageClass.GLACIER,
+              transitionAfter: cdk.Duration.days(30),
+            },
+          ],
+          expiration: cdk.Duration.days(365),
+        },
+      ],
+    });
+
+    this.internalAlb.logAccessLogs(logBucket, 'AccessLogs');
+    this.internalAlb.logConnectionLogs(logBucket, 'ConnectionLogs');
   }
 
   /**
@@ -191,10 +224,9 @@ export class AlbStack extends cdk.Stack {
       action: elbv2.ListenerAction.forward([apiGatewayTargetGroup])
     });
 
-    // /api/ で始まるパスのトラフィックをAPI Gatewayに転送するルール。
     listener.addAction('ApiProxyRule', {
       priority: 2,
-      conditions: [elbv2.ListenerCondition.pathPatterns(['/api/*'])],
+      conditions: [elbv2.ListenerCondition.pathPatterns([`/${AppConstants.API_PATH}/*`])],
       action: elbv2.ListenerAction.forward([apiGatewayTargetGroup])
     });
   }

@@ -68,6 +68,10 @@ export class BackendStack extends cdk.Stack {
       "service docker start",
       "usermod -a -G docker ec2-user",
       "chkconfig docker on",
+      // Docker Composeのインストール
+      "curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose",
+      "chmod +x /usr/local/bin/docker-compose",
+      "ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose",
       // Gitのインストール
       "yum install -y git",
       // アプリケーションコードを配置するディレクトリを作成する
@@ -98,6 +102,7 @@ export class BackendStack extends cdk.Stack {
     backendListener.addTargets(`${systemName}-BackendTarget`, {
       port: 80,
       targets: [new elbv2_targets.InstanceTarget(backendEc2Instance)],
+      healthCheck: { path: '/api/health', protocol: elbv2.Protocol.HTTP, healthyHttpCodes: '200' },
     });
 
     // 重要なスタックリソースのCloudFormation出力を作成します。

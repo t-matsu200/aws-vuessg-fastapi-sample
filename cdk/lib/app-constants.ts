@@ -1,8 +1,9 @@
 /**
- * 異なるCDKスタック間で利用されるエクスポート名を生成するための定数値とユーティリティメソッドのコレクションを定義します。
- * これにより、他のスタックによってインポートされるCloudFormation出力の一貫した命名規則が保証されます。
+ * 共通利用する定数クラス
  */
 export class AppConstants {
+  public static readonly API_PATH = 'api';
+
   /**
    * VPC IDのエクスポート名を生成します。
    * @param {string} systemName エクスポート名のプレフィックスとして使用されるシステム名。

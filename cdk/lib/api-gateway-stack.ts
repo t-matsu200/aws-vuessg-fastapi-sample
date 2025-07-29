@@ -71,7 +71,7 @@ export class ApiGatewayStack extends cdk.Stack {
       restApiName: `${systemName}-ApiGateway`,
       deployOptions: {
         // API Gatewayデプロイのステージ名を設定します。
-        stageName: 'api',
+        stageName: AppConstants.API_PATH,
         accessLogDestination: new apigateway.LogGroupLogDestination(logGroup),
         accessLogFormat: apigateway.AccessLogFormat.jsonWithStandardFields({
           caller: true,
@@ -134,18 +134,26 @@ export class ApiGatewayStack extends cdk.Stack {
       targets: [nlb],
     });
 
-    // API Gatewayの統合を定義し、VPCリンクを介してNLBを指します。
-    const integration = new apigateway.Integration({
-      type: apigateway.IntegrationType.HTTP_PROXY,
-      integrationHttpMethod: 'ANY',
-      options: {
-        connectionType: apigateway.ConnectionType.VPC_LINK,
-        vpcLink: vpcLink,
+    // ルートパス ('/') にANYメソッドでHTTPプロキシ統合を追加します。
+    // https://github.com/aws/aws-cdk/issues/28545
+    this.api.root.addProxy({
+      anyMethod: true,
+      defaultIntegration: new apigateway.HttpIntegration(
+        `http://${nlbDnsName}/${AppConstants.API_PATH}/{proxy}`,
+        {
+          proxy: true,
+          httpMethod: 'ANY',
+          options: {
+            vpcLink,
+            connectionType: apigateway.ConnectionType.VPC_LINK,
+            requestParameters: { 'integration.request.path.proxy': 'method.request.path.proxy' },
+          }
+        },
+      ),
+      defaultMethodOptions: {
+        requestParameters: { 'method.request.path.proxy': true },
       },
-      uri: `http://${nlbDnsName}` // NLBとの内部通信にはHTTPを使用します。
     });
-    // API Gatewayのルートにプロキシリソースを追加し、すべてのリクエストをNLBに転送します。
-    this.api.root.addProxy({ defaultIntegration: integration });
   }
 
   /**
@@ -156,7 +164,7 @@ export class ApiGatewayStack extends cdk.Stack {
   private createCfnOutputs(systemName: string) {
     // プライベートAPI GatewayのURLを出力します。
     new cdk.CfnOutput(this, 'PrivateApiGatewayUrl', {
-      value: `${this.api.url}api`,
+      value: `${this.api.url}${AppConstants.API_PATH}`,
       description: 'URL of the private API Gateway',
       exportName: AppConstants.getPrivateApiGatewayUrlExportName(systemName),
     });
