@@ -23,4 +23,4 @@ ENV PYTHONPATH=/app
 EXPOSE 8000
 
 # Command to run the FastAPI application with uvicorn
-CMD ["uv", "run", "uvicorn", "app:create_app", "--host", "0.0.0.0", "--port", "8000", "--factory", "--reload"]
+CMD ["uv", "run", "uvicorn", "app:create_app", "--host", "0.0.0.0", "--port", "8000", "--factory", "--timeout-keep-alive", "300", "--workers", "2"]
