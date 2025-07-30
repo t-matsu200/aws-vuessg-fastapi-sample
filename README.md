@@ -1,5 +1,7 @@
 # Vue.js (SSG) + FastAPI Sample Project
 
+![aws-python-vue-sample](./assets/aws-python-vue-sample.png)
+
 ## 1. 概要
 
 このプロジェクトは、フロントエンドにNuxt.js（静的サイト生成モード）、バックエンドにFastAPIを使用したWebアプリケーションのサンプルです。
