@@ -1,17 +1,15 @@
-import * as cdk from 'aws-cdk-lib';
+
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as elbv2_targets from 'aws-cdk-lib/aws-elasticloadbalancingv2-targets';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import { AppConstants } from './app-constants';
 
 /**
- * BackendStackのプロパティ。
- * @interface BackendStackProps
- * @extends cdk.StackProps
+ * BackendConstructのプロパティ。
+ * @interface BackendConstructProps
  */
-interface BackendStackProps extends cdk.StackProps {
+export interface BackendConstructProps {
   /**
    * バックエンドリソースがデプロイされるVPC。
    */
@@ -23,13 +21,13 @@ interface BackendStackProps extends cdk.StackProps {
 }
 
 /**
- * バックエンドアプリケーションコンポーネントをデプロイするためのAWS CDKスタックを定義します。
+ * バックエンドアプリケーションコンポーネントをデプロイするためのAWS CDKコンストラクトを定義します。
  * これには、EC2インスタンスと、それにトラフィックを分散するためのネットワークロードバランサー（NLB）が含まれます。
  * セキュリティグループは、VPCおよびAPI Gateway VPCエンドポイントからの通信を許可するように設定されています。
  */
-export class BackendStack extends cdk.Stack {
+export class BackendConstruct extends Construct {
   /**
-   * 作成されたネットワークロードバランサー（NLB）インスタンス。
+   * 作成されたネットワークロードバランサー（NLB）のARN。
    */
   public readonly nlbArn: string;
   /**
@@ -38,13 +36,13 @@ export class BackendStack extends cdk.Stack {
   public readonly nlbDnsName: string;
 
   /**
-   * BackendStackのインスタンスを作成します。
+   * BackendConstructのインスタンスを作成します。
    * @param {Construct} scope このコンストラクトを定義するスコープ。
    * @param {string} id コンストラクトのID。
-   * @param {BackendStackProps} props このスタックのプロパティ。
+   * @param {BackendConstructProps} props このコンストラクトのプロパティ。
    */
-  constructor(scope: Construct, id: string, props: BackendStackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: BackendConstructProps) {
+    super(scope, id);
 
     const systemName = this.node.tryGetContext('systemName');
     const vpc = props.vpc;

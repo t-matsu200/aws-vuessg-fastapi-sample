@@ -1,3 +1,4 @@
+
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
@@ -6,14 +7,13 @@ import * as elbv2_targets from 'aws-cdk-lib/aws-elasticloadbalancingv2-targets';
 import * as cr from 'aws-cdk-lib/custom-resources';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
-import { AppConstants } from './app-constants';
+import { AppConstants } from '../app-constants';
 
 /**
- * AlbStackのプロパティ。
- * @interface AlbStackProps
- * @extends cdk.StackProps
+ * AlbConstructのプロパティ。
+ * @interface AlbConstructProps
  */
-interface AlbStackProps extends cdk.StackProps {
+export interface AlbConstructProps {
   /**
    * ALBがデプロイされるVPC。
    */
@@ -33,26 +33,26 @@ interface AlbStackProps extends cdk.StackProps {
 }
 
 /**
- * アプリケーションロードバランサー（ALB）をデプロイするためのAWS CDKスタックを定義します。
+ * アプリケーションロードバランサー（ALB）をデプロイするためのAWS CDKコンストラクトを定義します。
  * このALBは、S3（VPCエンドポイント経由）とプライベートAPI Gateway（VPCエンドポイント経由）の両方にトラフィックをルーティングするように設定されており、
  * これらのAWSサービスへの内部アクセスを可能にします。
  */
-export class AlbStack extends cdk.Stack {
+export class AlbConstruct extends Construct {
 
   /**
-   * AlbStackのインスタンスを作成します。
+   * AlbConstructのインスタンスを作成します。
    * @param {Construct} scope このコンストラクトを定義するスコープ。
    * @param {string} id コンストラクトのID。
-   * @param {AlbStackProps} props このスタックのプロパティ。
+   * @param {AlbConstructProps} props このコンストラクトのプロパティ。
    */
-  constructor(scope: Construct, id: string, props: AlbStackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: AlbConstructProps) {
+    super(scope, id);
 
     const systemName = this.node.tryGetContext('systemName');
     const vpc = props.vpc;
 
     // 内部ALBとそれに関連するセキュリティグループを作成します。
-    const { internalAlb, albSg } = this.createAlbAndSecurityGroup(systemName, vpc);
+    const { internalAlb } = this.createAlbAndSecurityGroup(systemName, vpc);
 
     // ALBのアクセスログを有効にします。
     this.enableAccessLogs(systemName, internalAlb);
@@ -101,7 +101,7 @@ export class AlbStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      // 30日経過したら、コールドストレージに移動する
+      // ライフサイクルルールを設定し、30日後にGlacierストレージに移行し、365日後に削除します。
       lifecycleRules: [
         {
           id: 'ArchiveAndThenDelete',
@@ -118,7 +118,6 @@ export class AlbStack extends cdk.Stack {
     });
 
     internalAlb.logAccessLogs(logBucket, 'AccessLogs');
-    internalAlb.logConnectionLogs(logBucket, 'ConnectionLogs');
   }
 
   /**
@@ -188,9 +187,10 @@ export class AlbStack extends cdk.Stack {
    * @param {string} systemName リソース命名に使用されるシステム名。
    * @param {elbv2.ApplicationTargetGroup} s3TargetGroup S3のターゲットグループ。
    * @param {elbv2.ApplicationTargetGroup} apiGatewayTargetGroup API Gatewayのターゲットグループ。
-   * @param {string} apiId ホストヘッダーのマッチングに使用されるAPI GatewayのID。
+   * @param {string} apiGatewayArn ホストヘッダーのマッチングに使用されるAPI GatewayのARN。
    */
   private createListenersAndRules(systemName: string, internalAlb: elbv2.ApplicationLoadBalancer, s3TargetGroup: elbv2.ApplicationTargetGroup, apiGatewayTargetGroup: elbv2.ApplicationTargetGroup, apiGatewayArn: string) {
+    // API GatewayのARNからAPI IDを抽出します。これはホストヘッダーのルーティングに使用されます。
     const apiId = cdk.Fn.select(1, cdk.Fn.split('/', cdk.Fn.select(5, cdk.Fn.split(':', apiGatewayArn))));
 
     // ポート80にリスナーを追加し、S3ターゲットグループに転送するデフォルトアクションを設定します。
@@ -203,7 +203,7 @@ export class AlbStack extends cdk.Stack {
     listener.addAction('ApiGatewayRule', {
       priority: 1,
       conditions: [
-        elbv2.ListenerCondition.hostHeaders([`${apiId}.execute-api.${this.region}.amazonaws.com`]),
+        elbv2.ListenerCondition.hostHeaders([`${apiId}.execute-api.${cdk.Aws.REGION}.amazonaws.com`]),
         elbv2.ListenerCondition.pathPatterns(['/*']) // このホストヘッダーのすべてのパスにマッチします。
       ],
       action: elbv2.ListenerAction.forward([apiGatewayTargetGroup])

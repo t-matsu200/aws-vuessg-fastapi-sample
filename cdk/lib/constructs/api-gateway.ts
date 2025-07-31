@@ -1,18 +1,17 @@
-import * as cdk from 'aws-cdk-lib';
+
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
-import { AppConstants } from './app-constants';
+import { AppConstants } from '../app-constants';
 
 /**
- * ApiGatewayStackのプロパティ。
- * @interface ApiGatewayStackProps
- * @extends cdk.StackProps
+ * ApiGatewayConstructのプロパティ。
+ * @interface ApiGatewayConstructProps
  */
-interface ApiGatewayStackProps extends cdk.StackProps {
+export interface ApiGatewayConstructProps {
   /**
    * API Gatewayへのアクセスを制限するために使用される、API GatewayのVPCエンドポイントID。
    */
@@ -28,11 +27,11 @@ interface ApiGatewayStackProps extends cdk.StackProps {
 }
 
 /**
- * API GatewayをデプロイするためのAWS CDKスタックを定義します。
+ * API GatewayをデプロイするためのAWS CDKコンストラクトを定義します。
  * このAPI GatewayはプライベートAPIとして設定され、VPCリンクを介してネットワークロードバランサー（NLB）と統合され、
  * VPCエンドポイントを介してのみアクセス可能です。
  */
-export class ApiGatewayStack extends cdk.Stack {
+export class ApiGatewayConstruct extends Construct {
   /**
    * 作成されたAPI GatewayのID。
    */
@@ -43,13 +42,13 @@ export class ApiGatewayStack extends cdk.Stack {
   public readonly apiArn: string;
 
   /**
-   * ApiGatewayStackのインスタンスを作成します。
+   * ApiGatewayConstructのインスタンスを作成します。
    * @param {Construct} scope このコンストラクトを定義するスコープ。
    * @param {string} id コンストラクトのID。
-   * @param {ApiGatewayStackProps} props このスタックのプロパティ。
+   * @param {ApiGatewayConstructProps} props このコンストラクトのプロパティ。
    */
-  constructor(scope: Construct, id: string, props: ApiGatewayStackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: ApiGatewayConstructProps) {
+    super(scope, id);
 
     const systemName = this.node.tryGetContext('systemName');
 

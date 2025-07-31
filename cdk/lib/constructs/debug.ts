@@ -1,14 +1,14 @@
+
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 
 /**
- * DebugStackのプロパティ。
- * @interface DebugStackProps
- * @extends cdk.StackProps
+ * DebugConstructのプロパティ。
+ * @interface DebugConstructProps
  */
-export interface DebugStackProps extends cdk.StackProps {
+export interface DebugConstructProps {
   /**
    * デバッグ用EC2インスタンスが配置されるVPC。
    */
@@ -16,19 +16,19 @@ export interface DebugStackProps extends cdk.StackProps {
 }
 
 /**
- * デバッグ用EC2インスタンスをデプロイするためのAWS CDKスタックを定義します。
+ * デバッグ用EC2インスタンスをデプロイするためのAWS CDKコンストラクトを定義します。
  * このインスタンスはSession Managerアクセス用に設定されており、プライベートサブネットに配置されるため、
  * パブリックIPを公開せずにVPC内でトラブルシューティングが可能です。
  */
-export class DebugStack extends cdk.Stack {
+export class DebugConstruct extends Construct {
   /**
-   * DebugStackのインスタンスを作成します。
+   * DebugConstructのインスタンスを作成します。
    * @param {Construct} scope このコンストラクトを定義するスコープ。
    * @param {string} id コンストラクトのID。
-   * @param {DebugStackProps} props このスタックのプロパティ。
+   * @param {DebugConstructProps} props このコンストラクトのプロパティ。
    */
-  constructor(scope: Construct, id: string, props: DebugStackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: DebugConstructProps) {
+    super(scope, id);
 
     const systemName = this.node.tryGetContext('systemName');
 

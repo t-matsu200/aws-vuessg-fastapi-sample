@@ -1,14 +1,19 @@
-import * as cdk from 'aws-cdk-lib';
+
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import { AppConstants } from './app-constants';
 
 /**
- * 仮想プライベートクラウド（VPC）をデプロイするためのAWS CDKスタックを定義します。
+ * VpcConstructのプロパティ。
+ * @interface VpcConstructProps
+ */
+export interface VpcConstructProps {}
+
+/**
+ * 仮想プライベートクラウド（VPC）をデプロイするためのAWS CDKコンストラクトを定義します。
  * このVPCにはパブリックサブネットとプライベートサブネットが含まれ、S3およびAPI Gateway用のVPCエンドポイントを設定して、
  * これらのAWSサービスとのプライベートでセキュアな通信を可能にします。
  */
-export class VpcStack extends cdk.Stack {
+export class VpcConstruct extends Construct {
   /**
    * 作成されたVPCインスタンス。
    */
@@ -20,13 +25,13 @@ export class VpcStack extends cdk.Stack {
   private apiGatewayEndpointSg: ec2.SecurityGroup;
 
   /**
-   * VpcStackのインスタンスを作成します。
+   * VpcConstructのインスタンスを作成します。
    * @param {Construct} scope このコンストラクトを定義するスコープ。
    * @param {string} id コンストラクトのID。
-   * @param {cdk.StackProps} [props] このスタックのプロパティ。
+   * @param {VpcConstructProps} props このコンストラクトのプロパティ。
    */
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: VpcConstructProps) {
+    super(scope, id);
 
     const systemName = this.node.tryGetContext('systemName');
 

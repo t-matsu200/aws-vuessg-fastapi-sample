@@ -1,14 +1,14 @@
+
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
 
 /**
- * FrontendStackのプロパティ。
- * @interface FrontendStackProps
- * @extends cdk.StackProps
+ * FrontendConstructのプロパティ。
+ * @interface FrontendConstructProps
  */
-interface FrontendStackProps extends cdk.StackProps {
+export interface FrontendConstructProps {
   /**
    * S3バケットへのアクセスを制限するために使用されるS3 VPCエンドポイントID。
    */
@@ -16,24 +16,24 @@ interface FrontendStackProps extends cdk.StackProps {
 }
 
 /**
- * 静的フロントエンドアプリケーションをS3バケットにデプロイするためのAWS CDKスタックを定義します。
+ * 静的フロントエンドアプリケーションをS3バケットにデプロイするためのAWS CDKコンストラクトを定義します。
  * S3バケットは、指定されたVPCエンドポイント経由でのみアクセスを許可し、
  * CDKデプロイ/削除操作を許可するポリシーで設定されています。
  */
-export class FrontendStack extends cdk.Stack {
+export class FrontendConstruct extends Construct {
   /**
    * フロントエンドアプリケーション用に作成されたS3バケットインスタンス。
    */
   public readonly bucketName: string;
 
   /**
-   * FrontendStackのインスタンスを作成します。
+   * FrontendConstructのインスタンスを作成します。
    * @param {Construct} scope このコンストラクトを定義するスコープ。
    * @param {string} id コンストラクトのID。
-   * @param {FrontendStackProps} props このスタックのプロパティ。
+   * @param {FrontendConstructProps} props このコンストラクトのプロパティ。
    */
-  constructor(scope: Construct, id: string, props: FrontendStackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: FrontendConstructProps) {
+    super(scope, id);
 
     const systemName = this.node.tryGetContext('systemName');
 
@@ -114,8 +114,8 @@ export class FrontendStack extends cdk.Stack {
       conditions: {
         'ArnLike': {
           'aws:PrincipalArn': [
-            `arn:aws:iam::${this.account}:role/cdk-*`, // CDKデプロイロール。
-            `arn:aws:iam::${this.account}:role/*CustomS3AutoDeleteObjects*` // S3オブジェクトの自動削除用ロール。
+            `arn:aws:iam::${cdk.Stack.of(this).account}:role/cdk-*`, // CDKデプロイロール。
+            `arn:aws:iam::${cdk.Stack.of(this).account}:role/*CustomS3AutoDeleteObjects*` // S3オブジェクトの自動削除用ロール。
           ]
         },
       },
