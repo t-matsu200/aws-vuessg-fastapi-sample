@@ -36,6 +36,7 @@ const vpcStack = new VpcStack(app, `${systemName}-VpcStack`, {
  */
 const backendStack = new BackendStack(app, `${systemName}-BackendStack`, {
   vpc: vpcStack.vpc,
+  apiGatewayVpcEndpointSecurityGroupId: vpcStack.apiGatewayEndpointSgId,
   env: env,
 });
 backendStack.addDependency(vpcStack);
@@ -45,7 +46,7 @@ backendStack.addDependency(vpcStack);
  * セキュアなアクセスのためにS3 VPCエンドポイントIDを取得するためにVPCスタックに依存します。
  */
 const frontendStack = new FrontendStack(app, `${systemName}-FrontendStack`, {
-  s3EndpointId: vpcStack.s3Endpoint.vpcEndpointId,
+  s3EndpointId: vpcStack.s3EndpointId,
   env: env,
 });
 frontendStack.addDependency(vpcStack);
@@ -55,9 +56,9 @@ frontendStack.addDependency(vpcStack);
  * API Gateway VPCエンドポイントのためにVPCスタックに依存し、NLBの詳細のためにバックエンドスタックに依存します。
  */
 const apiGatewayStack = new ApiGatewayStack(app, `${systemName}-ApiGatewayStack`, {
-  apiGatewayEndpointId: vpcStack.apiGatewayEndpoint.vpcEndpointId,
-  nlbArn: backendStack.nlb.loadBalancerArn,
-  nlbDnsName: backendStack.nlb.loadBalancerDnsName,
+  apiGatewayEndpointId: vpcStack.apiGatewayEndpointId,
+  nlbArn: backendStack.nlbArn,
+  nlbDnsName: backendStack.nlbDnsName,
   env: env,
 });
 apiGatewayStack.addDependency(vpcStack);
@@ -65,13 +66,13 @@ apiGatewayStack.addDependency(backendStack);
 
 /**
  * ALBスタック: S3とAPI Gatewayにトラフィックをルーティングするためのアプリケーションロードバランサー（ALB）をデプロイします。
- * ネットワークリソースのためにVPCスタックに依存し、API IDのためにAPI Gatewayスタックに依存します。
+ * ネットワークリソースのためにVPCスタックに依存し、API GatewayのARNのためにAPI Gatewayスタックに依存します。
  */
 const albStack = new AlbStack(app, `${systemName}-AlbStack`, {
   vpc: vpcStack.vpc,
-  s3EndpointId: vpcStack.s3Endpoint.vpcEndpointId,
-  apiGatewayEndpointId: vpcStack.apiGatewayEndpoint.vpcEndpointId,
-  apiId: apiGatewayStack.api.restApiId,
+  s3EndpointId: vpcStack.s3EndpointId,
+  apiGatewayEndpointId: vpcStack.apiGatewayEndpointId,
+  apiGatewayArn: apiGatewayStack.apiArn,
   env: env,
 });
 albStack.addDependency(vpcStack);

@@ -27,9 +27,9 @@ interface AlbStackProps extends cdk.StackProps {
    */
   apiGatewayEndpointId: string;
   /**
-   * ホストベースのルーティングルールに使用されるAPI GatewayのID。
+   * ホストベースのルーティングルールに使用されるAPI GatewayのARN。
    */
-  apiId: string;
+  apiGatewayArn: string;
 }
 
 /**
@@ -38,8 +38,6 @@ interface AlbStackProps extends cdk.StackProps {
  * これらのAWSサービスへの内部アクセスを可能にします。
  */
 export class AlbStack extends cdk.Stack {
-  private internalAlb: elbv2.ApplicationLoadBalancer;
-  private albSg: ec2.SecurityGroup;
 
   /**
    * AlbStackのインスタンスを作成します。
@@ -54,33 +52,16 @@ export class AlbStack extends cdk.Stack {
     const vpc = props.vpc;
 
     // 内部ALBとそれに関連するセキュリティグループを作成します。
-    this.createAlbAndSecurityGroup(systemName, vpc);
+    const { internalAlb, albSg } = this.createAlbAndSecurityGroup(systemName, vpc);
 
     // ALBのアクセスログを有効にします。
-    this.enableAccessLogs(systemName);
+    this.enableAccessLogs(systemName, internalAlb);
 
     // S3とAPI Gatewayのターゲットグループを作成し、それぞれのVPCエンドポイントにマッピングします。
     const { s3TargetGroup, apiGatewayTargetGroup } = this.createTargetGroups(systemName, vpc, props.s3EndpointId, props.apiGatewayEndpointId);
 
     // ALBのリスナーとルーティングルールを設定し、トラフィックを正しいターゲットグループに転送します。
-    this.createListenersAndRules(systemName, s3TargetGroup, apiGatewayTargetGroup, props.apiId);
-
-    // 重要なスタックリソースのCloudFormation出力を作成します。
-    this.createCfnOutputs(systemName);
-  }
-
-  /**
-   * CloudFormationのoutputを作成します
-   * これらの出力はエクスポートされ、他のスタックや外部参照に使用できます
-   * @param {string} systemName エクスポート名に使用されるシステム名
-   */
-  private createCfnOutputs(systemName: string) {
-    // 内部ALBのURLを出力します。
-    new cdk.CfnOutput(this, 'InternalAlbUrl', {
-      value: `http://${this.internalAlb.loadBalancerDnsName}`,
-      description: 'Internal ALB URL',
-      exportName: AppConstants.getInternalAlbUrlExportName(systemName),
-    });
+    this.createListenersAndRules(systemName, internalAlb, s3TargetGroup, apiGatewayTargetGroup, props.apiGatewayArn);
   }
 
   /**
@@ -89,9 +70,9 @@ export class AlbStack extends cdk.Stack {
    * @param {string} systemName リソース命名に使用されるシステム名。
    * @param {ec2.IVpc} vpc ALBを作成するVPC。
    */
-  private createAlbAndSecurityGroup(systemName: string, vpc: ec2.IVpc) {
+  private createAlbAndSecurityGroup(systemName: string, vpc: ec2.IVpc): { internalAlb: elbv2.ApplicationLoadBalancer, albSg: ec2.SecurityGroup } {
     // 内部ALBを作成します。
-    this.internalAlb = new elbv2.ApplicationLoadBalancer(this, `${systemName}-InternalAlb`, {
+    const internalAlb = new elbv2.ApplicationLoadBalancer(this, `${systemName}-InternalAlb`, {
       vpc: vpc,
       internetFacing: false,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
@@ -99,21 +80,23 @@ export class AlbStack extends cdk.Stack {
     });
 
     // すべてのアウトバウンドトラフィックを許可するALBのセキュリティグループを作成します。
-    this.albSg = new ec2.SecurityGroup(this, `${systemName}-InternalAlbSg`, {
+    const albSg = new ec2.SecurityGroup(this, `${systemName}-InternalAlbSg`, {
       vpc: vpc,
       allowAllOutbound: true,
     });
     // VPC CIDRブロック内からのインバウンドHTTPトラフィックを許可します。
-        this.albSg.addIngressRule(ec2.Peer.ipv4(vpc.vpcCidrBlock), ec2.Port.tcp(80), 'Allow HTTP traffic from VPC');
+    albSg.addIngressRule(ec2.Peer.ipv4(vpc.vpcCidrBlock), ec2.Port.tcp(80), 'Allow HTTP traffic from VPC');
     // セキュリティグループをALBに関連付けます。
-    this.internalAlb.addSecurityGroup(this.albSg);
+    internalAlb.addSecurityGroup(albSg);
+
+    return { internalAlb, albSg };
   }
 
   /**
    * ALBのアクセスログを有効にします。
    * @param {string} systemName リソース命名に使用されるシステム名。
    */
-  private enableAccessLogs(systemName: string) {
+  private enableAccessLogs(systemName: string, internalAlb: elbv2.ApplicationLoadBalancer) {
     const logBucket = new s3.Bucket(this, `${systemName}-AlbAccessLogsBucket`, {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
@@ -134,8 +117,8 @@ export class AlbStack extends cdk.Stack {
       ],
     });
 
-    this.internalAlb.logAccessLogs(logBucket, 'AccessLogs');
-    this.internalAlb.logConnectionLogs(logBucket, 'ConnectionLogs');
+    internalAlb.logAccessLogs(logBucket, 'AccessLogs');
+    internalAlb.logConnectionLogs(logBucket, 'ConnectionLogs');
   }
 
   /**
@@ -207,9 +190,11 @@ export class AlbStack extends cdk.Stack {
    * @param {elbv2.ApplicationTargetGroup} apiGatewayTargetGroup API Gatewayのターゲットグループ。
    * @param {string} apiId ホストヘッダーのマッチングに使用されるAPI GatewayのID。
    */
-  private createListenersAndRules(systemName: string, s3TargetGroup: elbv2.ApplicationTargetGroup, apiGatewayTargetGroup: elbv2.ApplicationTargetGroup, apiId: string) {
+  private createListenersAndRules(systemName: string, internalAlb: elbv2.ApplicationLoadBalancer, s3TargetGroup: elbv2.ApplicationTargetGroup, apiGatewayTargetGroup: elbv2.ApplicationTargetGroup, apiGatewayArn: string) {
+    const apiId = cdk.Fn.select(1, cdk.Fn.split('/', cdk.Fn.select(5, cdk.Fn.split(':', apiGatewayArn))));
+
     // ポート80にリスナーを追加し、S3ターゲットグループに転送するデフォルトアクションを設定します。
-    const listener = this.internalAlb.addListener(`${systemName}-DefaultListener`, {
+    const listener = internalAlb.addListener(`${systemName}-DefaultListener`, {
       port: 80,
       defaultAction: elbv2.ListenerAction.forward([s3TargetGroup])
     });
@@ -258,7 +243,7 @@ export class AlbStack extends cdk.Stack {
             { Name: 'description', Values: [`VPC Endpoint Interface ${vpcEndpointId}`] },
           ]
         },
-        // 各エンドポイントIP取得に対して一意の物理リソースIDを保証します。
+        // 物理リソースIDを更新のたびに変更することで、カスタムリソースが常に再実行されるようにします。
         physicalResourceId: cr.PhysicalResourceId.of(`GetEndpointIp-${crid}-${vpcEndpointId}-${subnetId}`),
       },
       // カスタムリソースがDescribeNetworkInterfacesを呼び出すために必要なIAMポリシーを定義します。

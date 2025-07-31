@@ -22,7 +22,7 @@ interface ApiGatewayStackProps extends cdk.StackProps {
    */
   nlbArn: string;
   /**
-   * API Gateway統合のためのネットワークロードバランサー（NLB）のDNS名。
+   * API Gatewayが統合するネットワークロードバランサー（NLB）のDNS名。
    */
   nlbDnsName: string;
 }
@@ -34,9 +34,13 @@ interface ApiGatewayStackProps extends cdk.StackProps {
  */
 export class ApiGatewayStack extends cdk.Stack {
   /**
-   * 作成されたAPI Gateway RestApiインスタンス。
+   * 作成されたAPI GatewayのID。
    */
-  public readonly api: apigateway.RestApi;
+  public readonly apiId: string;
+  /**
+   * 作成されたAPI GatewayのARN。
+   */
+  public readonly apiArn: string;
 
   /**
    * ApiGatewayStackのインスタンスを作成します。
@@ -67,7 +71,7 @@ export class ApiGatewayStack extends cdk.Stack {
     });
 
     // 指定されたVPCエンドポイントと統合するプライベートAPI Gatewayを作成します。
-    this.api = new apigateway.RestApi(this, `${systemName}-ApiGateway`, {
+    const api = new apigateway.RestApi(this, `${systemName}-ApiGateway`, {
       restApiName: `${systemName}-ApiGateway`,
       deployOptions: {
         // API Gatewayデプロイのステージ名を設定します。
@@ -113,8 +117,10 @@ export class ApiGatewayStack extends cdk.Stack {
       })
     });
 
-    this.createVpcLinkAndIntegration(systemName, props.nlbArn, props.nlbDnsName);
-    this.createCfnOutputs(systemName);
+    this.apiId = api.restApiId;
+    this.apiArn = api.arnForExecuteApi();
+
+    this.createVpcLinkAndIntegration(api, systemName, props.nlbArn, props.nlbDnsName);
   }
 
   /**
@@ -123,10 +129,11 @@ export class ApiGatewayStack extends cdk.Stack {
    * @param {string} nlbArn ネットワークロードバランサーのARN。
    * @param {string} nlbDnsName ネットワークロードバランサーのDNS名。
    */
-  private createVpcLinkAndIntegration(systemName: string, nlbArn: string, nlbDnsName: string) {
+  private createVpcLinkAndIntegration(api: apigateway.RestApi, systemName: string, nlbArn: string, nlbDnsName: string) {
     // VPCリンクを作成するために既存のNLBをインポートします。
     const nlb = elbv2.NetworkLoadBalancer.fromNetworkLoadBalancerAttributes(this, 'ImportedNlbForApiGw', {
       loadBalancerArn: nlbArn,
+      loadBalancerDnsName: nlbDnsName,
     });
 
     // API GatewayがVPC内でNLBに接続できるようにVPCリンクを作成します。
@@ -136,10 +143,10 @@ export class ApiGatewayStack extends cdk.Stack {
 
     // ルートパス ('/') にANYメソッドでHTTPプロキシ統合を追加します。
     // https://github.com/aws/aws-cdk/issues/28545
-    this.api.root.addProxy({
+    api.root.addProxy({
       anyMethod: true,
       defaultIntegration: new apigateway.HttpIntegration(
-        `http://${nlbDnsName}/${AppConstants.API_PATH}/{proxy}`,
+        `http://${nlb.loadBalancerDnsName}/${AppConstants.API_PATH}/{proxy}`,
         {
           proxy: true,
           httpMethod: 'ANY',
@@ -153,27 +160,6 @@ export class ApiGatewayStack extends cdk.Stack {
       defaultMethodOptions: {
         requestParameters: { 'method.request.path.proxy': true },
       },
-    });
-  }
-
-  /**
-   * CloudFormationのoutputを作成します
-   * これらの出力はエクスポートされ、他のスタックや外部参照に使用できます
-   * @param {string} systemName エクスポート名に使用されるシステム名
-   */
-  private createCfnOutputs(systemName: string) {
-    // プライベートAPI GatewayのURLを出力します。
-    new cdk.CfnOutput(this, 'PrivateApiGatewayUrl', {
-      value: `${this.api.url}${AppConstants.API_PATH}`,
-      description: 'URL of the private API Gateway',
-      exportName: AppConstants.getPrivateApiGatewayUrlExportName(systemName),
-    });
-
-    // API GatewayのIDを出力します。
-    new cdk.CfnOutput(this, 'ApiId', {
-      value: this.api.restApiId,
-      description: 'ID of the API Gateway',
-      exportName: AppConstants.getApiIdExportName(systemName),
     });
   }
 }
