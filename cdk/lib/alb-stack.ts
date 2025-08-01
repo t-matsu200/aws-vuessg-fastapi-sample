@@ -19,15 +19,15 @@ interface AlbStackProps extends cdk.StackProps {
    */
   vpc: ec2.IVpc;
   /**
-   * ALBを介してS3トラフィックをルーティングするために使用されるS3 VPCエンドポイントID。
+   * ALBを介してフロントエンドへトラフィックをルーティングするために使用されるS3 VPCエンドポイントID。
    */
   s3EndpointId: string;
   /**
-   * ALBを介してAPI Gatewayトラフィックをルーティングするために使用されるAPI Gateway VPCエンドポイントID。
+   * ALBを介してバックエンドへトラフィックをルーティングするために使用されるAPI Gateway VPCエンドポイントID。
    */
   apiGatewayEndpointId: string;
   /**
-   * ホストベースのルーティングルールに使用されるAPI GatewayのARN。
+   * バックエンドへのルーティングルールに使用されるAPI GatewayのARN。
    */
   apiGatewayArn: string;
 }
@@ -38,6 +38,8 @@ interface AlbStackProps extends cdk.StackProps {
  * これらのAWSサービスへの内部アクセスを可能にします。
  */
 export class AlbStack extends cdk.Stack {
+
+  public readonly albSecurityGroupId: string;
 
   /**
    * AlbStackのインスタンスを作成します。
@@ -53,6 +55,7 @@ export class AlbStack extends cdk.Stack {
 
     // 内部ALBとそれに関連するセキュリティグループを作成します。
     const { internalAlb, albSg } = this.createAlbAndSecurityGroup(systemName, vpc);
+    this.albSecurityGroupId = albSg.securityGroupId;
 
     // ALBのアクセスログを有効にします。
     this.enableAccessLogs(systemName, internalAlb);

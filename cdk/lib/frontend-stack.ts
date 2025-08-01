@@ -13,6 +13,10 @@ interface FrontendStackProps extends cdk.StackProps {
    * S3バケットへのアクセスを制限するために使用されるS3 VPCエンドポイントID。
    */
   s3EndpointId: string;
+  /**
+   * ALBのセキュリティグループID。
+   */
+  albSecurityGroupId: string;
 }
 
 /**
@@ -52,7 +56,7 @@ export class FrontendStack extends cdk.Stack {
     this.bucketName = bucket.bucketName;
 
     // アクセスを制限し、CDK操作を許可するためにバケットポリシーを適用します。
-    this.createBucketPolicies(bucket, props.s3EndpointId);
+    this.createBucketPolicies(bucket, props.s3EndpointId, props.albSecurityGroupId);
   }
 
   /**
@@ -87,7 +91,7 @@ export class FrontendStack extends cdk.Stack {
    * アクセスは指定されたS3 VPCエンドポイントに制限され、CDKデプロイロールに許可されます。
    * @param {string} s3EndpointId S3のVPCエンドポイントID。
    */
-  private createBucketPolicies(bucket: s3.Bucket, s3EndpointId: string) {
+  private createBucketPolicies(bucket: s3.Bucket, s3EndpointId: string, albSecurityGroupId: string) {
     // 指定されたS3 VPCエンドポイントからのみGetObjectアクションを許可するポリシー。
     bucket.addToResourcePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,

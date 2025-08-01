@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import { AppConstants } from './app-constants';
 
 /**
  * 仮想プライベートクラウド（VPC）をデプロイするためのAWS CDKスタックを定義します。
@@ -13,11 +12,18 @@ export class VpcStack extends cdk.Stack {
    * 作成されたVPCインスタンス。
    */
   public readonly vpc: ec2.IVpc;
+  /**
+   * S3 VPCエンドポイントのID。
+   */
   public readonly s3EndpointId: string;
+  /**
+   * API Gateway VPCエンドポイントのID。
+   */
   public readonly apiGatewayEndpointId: string;
+  /**
+   * API Gateway VPCエンドポイントに関連付けられたセキュリティグループのID。
+   */
   public readonly apiGatewayEndpointSgId: string;
-
-  private apiGatewayEndpointSg: ec2.SecurityGroup;
 
   /**
    * VpcStackのインスタンスを作成します。
@@ -40,7 +46,7 @@ export class VpcStack extends cdk.Stack {
     });
 
     // VPCエンドポイントに必要なセキュリティグループを作成します。
-    this.createSecurityGroups(systemName);
+    const apiGatewayEndpointSg = this.createSecurityGroups(systemName);
 
     // S3用のVPCインターフェースエンドポイントを作成し、VPC内からS3へのプライベートアクセスを許可します。
     const s3Endpoint = this.vpc.addInterfaceEndpoint(`${systemName}-S3VpcEndpoint`, {
@@ -56,12 +62,12 @@ export class VpcStack extends cdk.Stack {
       service: ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
       subnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       privateDnsEnabled: true,
-      securityGroups: [this.apiGatewayEndpointSg], // カスタムセキュリティグループを関連付けます。
+      securityGroups: [apiGatewayEndpointSg], // カスタムセキュリティグループを関連付けます。
     });
 
     this.s3EndpointId = s3Endpoint.vpcEndpointId;
     this.apiGatewayEndpointId = apiGatewayEndpoint.vpcEndpointId;
-    this.apiGatewayEndpointSgId = this.apiGatewayEndpointSg.securityGroupId;
+    this.apiGatewayEndpointSgId = apiGatewayEndpointSg.securityGroupId;
   }
 
   /**
@@ -69,13 +75,14 @@ export class VpcStack extends cdk.Stack {
    * 特に、API Gateway VPCエンドポイント用のセキュリティグループが作成されます。
    * @param {string} systemName リソース命名に使用されるシステム名。
    */
-  private createSecurityGroups(systemName: string) {
+  private createSecurityGroups(systemName: string): ec2.SecurityGroup {
     // API Gateway VPCエンドポイントのセキュリティグループ。
-    this.apiGatewayEndpointSg = new ec2.SecurityGroup(this, `${systemName}-ApiGatewayEndpointSg`, {
+    const apiGatewayEndpointSg = new ec2.SecurityGroup(this, `${systemName}-ApiGatewayEndpointSg`, {
       vpc: this.vpc,
       allowAllOutbound: false, // デフォルトですべてのアウトバウンドトラフィックを明示的に制限します。
     });
     // API Gateway VPCエンドポイントからNLBへのアウトバウンドHTTPトラフィック（ポート80）を許可します。
-    this.apiGatewayEndpointSg.addEgressRule(ec2.Peer.ipv4(this.vpc.vpcCidrBlock), ec2.Port.tcp(80), 'Allow HTTP to NLB');
+    apiGatewayEndpointSg.addEgressRule(ec2.Peer.ipv4(this.vpc.vpcCidrBlock), ec2.Port.tcp(80), 'Allow HTTP to NLB');
+    return apiGatewayEndpointSg;
   }
 }
