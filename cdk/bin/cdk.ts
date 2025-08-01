@@ -42,16 +42,6 @@ const backendStack = new BackendStack(app, `${systemName}-BackendStack`, {
 backendStack.addDependency(vpcStack);
 
 /**
- * フロントエンドスタック: 静的フロントエンドアセットをS3バケットにデプロイします。
- * セキュアなアクセスのためにS3 VPCエンドポイントIDを取得するためにVPCスタックに依存します。
- */
-const frontendStack = new FrontendStack(app, `${systemName}-FrontendStack`, {
-  s3EndpointId: vpcStack.s3EndpointId,
-  env: env,
-});
-frontendStack.addDependency(vpcStack);
-
-/**
  * API Gatewayスタック: バックエンドサービスを公開するためのAPI Gatewayをデプロイします。
  * API Gateway VPCエンドポイントのためにVPCスタックに依存し、NLBの詳細のためにバックエンドスタックに依存します。
  */
@@ -77,6 +67,18 @@ const albStack = new AlbStack(app, `${systemName}-AlbStack`, {
 });
 albStack.addDependency(vpcStack);
 albStack.addDependency(apiGatewayStack);
+
+/**
+ * フロントエンドスタック: 静的フロントエンドアセットをS3バケットにデプロイします。
+ * セキュアなアクセスのためにS3 VPCエンドポイントIDを取得するためにVPCスタックに依存します。
+ */
+const frontendStack = new FrontendStack(app, `${systemName}-FrontendStack`, {
+  s3EndpointId: vpcStack.s3EndpointId,
+  albSecurityGroupId: albStack.albSecurityGroupId,
+  env: env,
+});
+frontendStack.addDependency(vpcStack);
+frontendStack.addDependency(albStack);
 
 /**
  * デバッグスタック: デバッグ目的のリソース（例：VPC内のEC2インスタンス）をデプロイします。
