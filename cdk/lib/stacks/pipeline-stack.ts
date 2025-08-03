@@ -44,7 +44,7 @@ export class PipelineStack extends cdk.Stack {
     const project = new codebuild.PipelineProject(this, "CodeBuildProject", {
       projectName: `${props.systemName}-codebuild-project`,
       environment: {
-        buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_5,
+        buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2023_5,
         computeType: codebuild.ComputeType.SMALL,
         environmentVariables: {
           S3_BUCKET_NAME: { value: frontendBucket.bucketName },
