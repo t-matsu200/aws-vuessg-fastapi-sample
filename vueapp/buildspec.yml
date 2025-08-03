@@ -16,4 +16,4 @@ phases:
 artifacts:
   files:
     - '**/*'
-  base-directory: ./.output/public
+  base-directory: $CODEBUILD_SRC_DIR/vueapp
