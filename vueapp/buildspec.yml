@@ -1,0 +1,19 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "Installing npm dependencies..."
+      - npm install
+  build:
+    commands:
+      - echo "Building Nuxt.js application..."
+      - npm run generate
+  post_build:
+    commands:
+      - echo "Deploying to S3..."
+      - aws s3 sync ./.output/public/ s3://$S3_BUCKET_NAME --delete
+artifacts:
+  files:
+    - '**/*'
+  base-directory: ./.output/public
