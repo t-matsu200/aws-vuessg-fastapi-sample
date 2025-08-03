@@ -1,12 +1,11 @@
 version: 0.2
 
 phases:
-  install:
-    commands:
-      - echo "Installing npm dependencies..."
-      - npm install
   build:
     commands:
+      - cd ./vueapp
+      - echo "Installing npm dependencies..."
+      - npm install
       - echo "Building Nuxt.js application..."
       - npm run generate
   post_build:
@@ -16,4 +15,3 @@ phases:
 artifacts:
   files:
     - '**/*'
-  base-directory: $CODEBUILD_SRC_DIR/vueapp
