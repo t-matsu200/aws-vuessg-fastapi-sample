@@ -1,9 +1,10 @@
 version: 0.2
 
 phases:
-  build:
+  install:
     runtime-versions:
-      nodejs: 24
+      nodejs: 22
+  build:
     commands:
       - cd ./vueapp
       - echo "Installing npm dependencies..."
