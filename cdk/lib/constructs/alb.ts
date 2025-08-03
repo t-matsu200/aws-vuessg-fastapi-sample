@@ -30,6 +30,7 @@ export interface AlbConstructProps {
    * ホストベースのルーティングルールに使用されるAPI GatewayのARN。
    */
   apiGatewayArn: string;
+  systemName: string;
 }
 
 /**
@@ -48,20 +49,19 @@ export class AlbConstruct extends Construct {
   constructor(scope: Construct, id: string, props: AlbConstructProps) {
     super(scope, id);
 
-    const systemName = this.node.tryGetContext('systemName');
     const vpc = props.vpc;
 
     // 内部ALBとそれに関連するセキュリティグループを作成します。
-    const { internalAlb } = this.createAlbAndSecurityGroup(systemName, vpc);
+    const { internalAlb } = this.createAlbAndSecurityGroup(props.systemName, vpc);
 
     // ALBのアクセスログを有効にします。
-    this.enableAccessLogs(systemName, internalAlb);
+    this.enableAccessLogs(props.systemName, internalAlb);
 
     // S3とAPI Gatewayのターゲットグループを作成し、それぞれのVPCエンドポイントにマッピングします。
-    const { s3TargetGroup, apiGatewayTargetGroup } = this.createTargetGroups(systemName, vpc, props.s3EndpointId, props.apiGatewayEndpointId);
+    const { s3TargetGroup, apiGatewayTargetGroup } = this.createTargetGroups(props.systemName, vpc, props.s3EndpointId, props.apiGatewayEndpointId);
 
     // ALBのリスナーとルーティングルールを設定し、トラフィックを正しいターゲットグループに転送します。
-    this.createListenersAndRules(systemName, internalAlb, s3TargetGroup, apiGatewayTargetGroup, props.apiGatewayArn);
+    this.createListenersAndRules(props.systemName, internalAlb, s3TargetGroup, apiGatewayTargetGroup, props.apiGatewayArn);
   }
 
   /**

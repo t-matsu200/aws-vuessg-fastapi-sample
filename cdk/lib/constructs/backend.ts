@@ -18,6 +18,7 @@ export interface BackendConstructProps {
    * API Gateway VPCエンドポイントのセキュリティグループID。
    */
   apiGatewayVpcEndpointSecurityGroupId: string;
+  systemName: string;
 }
 
 /**
@@ -44,14 +45,13 @@ export class BackendConstruct extends Construct {
   constructor(scope: Construct, id: string, props: BackendConstructProps) {
     super(scope, id);
 
-    const systemName = this.node.tryGetContext('systemName');
     const vpc = props.vpc;
 
     // EC2インスタンスのセキュリティグループを作成および設定します。
-    const ec2SecurityGroup = this.createEc2SecurityGroup(systemName, vpc, props.apiGatewayVpcEndpointSecurityGroupId);
+    const ec2SecurityGroup = this.createEc2SecurityGroup(props.systemName, vpc, props.apiGatewayVpcEndpointSecurityGroupId);
 
     // SSMアクセスを許可するEC2インスタンスのIAMロールを作成します。
-    const ec2Role = new iam.Role(this, `${systemName}-BackendEc2Role`, {
+    const ec2Role = new iam.Role(this, `${props.systemName}-BackendEc2Role`, {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
@@ -81,7 +81,7 @@ export class BackendConstruct extends Construct {
     );
 
     // バックエンドアプリケーション用のEC2インスタンスを作成します。
-    const backendEc2Instance = new ec2.Instance(this, `${systemName}-BackendEc2Instance`, {
+    const backendEc2Instance = new ec2.Instance(this, `${props.systemName}-BackendEc2Instance`, {
       vpc: vpc,
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       machineImage: ec2.MachineImage.latestAmazonLinux2(),
@@ -92,7 +92,7 @@ export class BackendConstruct extends Construct {
     });
 
     // バックエンドEC2インスタンスにトラフィックを分散するための内部ネットワークロードバランサー（NLB）を作成します。
-    const nlb = new elbv2.NetworkLoadBalancer(this, `${systemName}-BackendNlb`, {
+    const nlb = new elbv2.NetworkLoadBalancer(this, `${props.systemName}-BackendNlb`, {
       vpc: vpc,
       internetFacing: false,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
@@ -101,8 +101,8 @@ export class BackendConstruct extends Construct {
     this.nlbDnsName = nlb.loadBalancerDnsName;
 
     // ポート80にリスナーを追加し、バックエンドEC2インスタンスにトラフィックを転送します。
-    const backendListener = nlb.addListener(`${systemName}-BackendListener`, { port: 80 });
-    backendListener.addTargets(`${systemName}-BackendTarget`, {
+    const backendListener = nlb.addListener(`${props.systemName}-BackendListener`, { port: 80 });
+    backendListener.addTargets(`${props.systemName}-BackendTarget`, {
       port: 80,
       targets: [new elbv2_targets.InstanceTarget(backendEc2Instance)],
       healthCheck: { path: '/api/health', protocol: elbv2.Protocol.HTTP, healthyHttpCodes: '200' },

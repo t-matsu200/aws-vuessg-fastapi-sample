@@ -6,7 +6,9 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
  * VpcConstructのプロパティ。
  * @interface VpcConstructProps
  */
-export interface VpcConstructProps {}
+export interface VpcConstructProps {
+  systemName: string;
+}
 
 /**
  * 仮想プライベートクラウド（VPC）をデプロイするためのAWS CDKコンストラクトを定義します。
@@ -33,10 +35,8 @@ export class VpcConstruct extends Construct {
   constructor(scope: Construct, id: string, props: VpcConstructProps) {
     super(scope, id);
 
-    const systemName = this.node.tryGetContext('systemName');
-
     // パブリックサブネットとプライベートサブネットを持つ新しいVPCを2つのアベイラビリティゾーンに作成します。
-    this.vpc = new ec2.Vpc(this, `${systemName}-AppVpc`, {
+    this.vpc = new ec2.Vpc(this, `${props.systemName}-AppVpc`, {
       maxAzs: 2,
       subnetConfiguration: [
         { cidrMask: 24, name: 'public', subnetType: ec2.SubnetType.PUBLIC },
@@ -45,10 +45,10 @@ export class VpcConstruct extends Construct {
     });
 
     // VPCエンドポイントに必要なセキュリティグループを作成します。
-    this.createSecurityGroups(systemName);
+    this.createSecurityGroups(props.systemName);
 
     // S3用のVPCインターフェースエンドポイントを作成し、VPC内からS3へのプライベートアクセスを許可します。
-    const s3Endpoint = this.vpc.addInterfaceEndpoint(`${systemName}-S3VpcEndpoint`, {
+    const s3Endpoint = this.vpc.addInterfaceEndpoint(`${props.systemName}-S3VpcEndpoint`, {
       service: ec2.InterfaceVpcEndpointAwsService.S3,
       subnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       privateDnsEnabled: true,
@@ -57,7 +57,7 @@ export class VpcConstruct extends Construct {
     });
 
     // API Gateway用のVPCインターフェースエンドポイントを作成し、VPC内からAPI Gatewayへのプライベートアクセスを許可します。
-    const apiGatewayEndpoint = this.vpc.addInterfaceEndpoint(`${systemName}-ApiGatewayVpcEndpoint`, {
+    const apiGatewayEndpoint = this.vpc.addInterfaceEndpoint(`${props.systemName}-ApiGatewayVpcEndpoint`, {
       service: ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
       subnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       privateDnsEnabled: true,

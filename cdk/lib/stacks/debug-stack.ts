@@ -13,6 +13,7 @@ export interface DebugStackProps extends cdk.StackProps {
    * デバッグ用EC2インスタンスが配置されるVPC。
    */
   readonly vpc: ec2.IVpc;
+  systemName: string;
 }
 
 /**
@@ -30,6 +31,7 @@ export class DebugStack extends cdk.Stack {
 
     new DebugConstruct(this, 'DebugConstruct', {
       vpc: props.vpc,
+      systemName: props.systemName,
     });
   }
 }

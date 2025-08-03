@@ -29,6 +29,11 @@ interface ApplicationStackProps extends cdk.StackProps {
    * API Gateway VPCエンドポイントのセキュリティグループID。
    */
   apiGatewayVpcEndpointSecurityGroupId: string;
+  /**
+   * システム名
+   */
+  systemName: string;
+  frontendBucketName: string;
 }
 
 /**
@@ -48,16 +53,20 @@ export class ApplicationStack extends cdk.Stack {
     const backend = new BackendConstruct(this, 'BackendConstruct', {
       vpc: props.vpc,
       apiGatewayVpcEndpointSecurityGroupId: props.apiGatewayVpcEndpointSecurityGroupId,
+      systemName: props.systemName,
     });
 
     new FrontendConstruct(this, 'FrontendConstruct', {
       s3EndpointId: props.s3EndpointId,
+      systemName: props.systemName,
+      frontendBucketName: props.frontendBucketName,
     });
 
     const apiGateway = new ApiGatewayConstruct(this, 'ApiGatewayConstruct', {
       apiGatewayEndpointId: props.apiGatewayEndpointId,
       nlbArn: backend.nlbArn,
       nlbDnsName: backend.nlbDnsName,
+      systemName: props.systemName,
     });
 
     new AlbConstruct(this, 'AlbConstruct', {
@@ -65,6 +74,7 @@ export class ApplicationStack extends cdk.Stack {
       s3EndpointId: props.s3EndpointId,
       apiGatewayEndpointId: props.apiGatewayEndpointId,
       apiGatewayArn: apiGateway.apiArn,
+      systemName: props.systemName,
     });
   }
 }

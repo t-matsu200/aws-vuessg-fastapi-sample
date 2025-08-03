@@ -13,6 +13,7 @@ export interface DebugConstructProps {
    * デバッグ用EC2インスタンスが配置されるVPC。
    */
   readonly vpc: ec2.IVpc;
+  systemName: string;
 }
 
 /**
@@ -30,10 +31,8 @@ export class DebugConstruct extends Construct {
   constructor(scope: Construct, id: string, props: DebugConstructProps) {
     super(scope, id);
 
-    const systemName = this.node.tryGetContext('systemName');
-
     // EC2インスタンスのIAMロールを作成し、SSMアクセスとS3フルアクセスを有効にします。
-    const role = new iam.Role(this, `${systemName}-DebugInstanceRole`, {
+    const role = new iam.Role(this, `${props.systemName}-DebugInstanceRole`, {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
@@ -42,14 +41,14 @@ export class DebugConstruct extends Construct {
     });
 
     // デバッグ用EC2インスタンスのセキュリティグループを作成し、すべてのアウトバウンドトラフィックを許可します。
-    const securityGroup = new ec2.SecurityGroup(this, `${systemName}-DebugInstanceSg`, {
+    const securityGroup = new ec2.SecurityGroup(this, `${props.systemName}-DebugInstanceSg`, {
       vpc: props.vpc,
       allowAllOutbound: true,
     });
     // Session Managerはオープンポートを必要としないため、ここではインバウンドルールは明示的に追加されません。
 
     // デバッグ目的のEC2インスタンスを作成します。
-    new ec2.Instance(this, `${systemName}-DebugInstance`, {
+    new ec2.Instance(this, `${props.systemName}-DebugInstance`, {
       vpc: props.vpc,
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       machineImage: ec2.MachineImage.latestAmazonLinux2(),

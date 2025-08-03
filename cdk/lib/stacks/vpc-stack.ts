@@ -3,6 +3,10 @@ import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { VpcConstruct } from '../constructs/vpc';
 
+interface VpcStackProps extends cdk.StackProps {
+  systemName: string;
+}
+
 /**
  * 仮想プライベートクラウド（VPC）をデプロイするためのAWS CDKスタックを定義します。
  */
@@ -21,10 +25,10 @@ export class VpcStack extends cdk.Stack {
    * @param {string} id コンストラクトのID。
    * @param {cdk.StackProps} [props] このスタックのプロパティ。
    */
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: VpcStackProps) {
     super(scope, id, props);
 
-    const vpcConstruct = new VpcConstruct(this, 'VpcConstruct', {});
+    const vpcConstruct = new VpcConstruct(this, 'VpcConstruct', { systemName: props.systemName });
     this.vpc = vpcConstruct.vpc;
     this.s3EndpointId = vpcConstruct.s3EndpointId;
     this.apiGatewayEndpointId = vpcConstruct.apiGatewayEndpointId;

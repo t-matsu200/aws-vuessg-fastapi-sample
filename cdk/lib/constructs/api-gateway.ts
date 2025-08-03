@@ -24,6 +24,7 @@ export interface ApiGatewayConstructProps {
    * API Gatewayが統合するネットワークロードバランサー（NLB）のDNS名。
    */
   nlbDnsName: string;
+  systemName: string;
 }
 
 /**
@@ -50,13 +51,11 @@ export class ApiGatewayConstruct extends Construct {
   constructor(scope: Construct, id: string, props: ApiGatewayConstructProps) {
     super(scope, id);
 
-    const systemName = this.node.tryGetContext('systemName');
-
     // API Gatewayのアクセスログを保存するためのCloudWatchロググループを作成します。
-    const logGroup = new logs.LogGroup(this, `${systemName}-ApiGatewayAccessLogs`);
+    const logGroup = new logs.LogGroup(this, `${props.systemName}-ApiGatewayAccessLogs`);
 
     // API GatewayがCloudWatch Logsに書き込むためのIAMロールを作成します。
-    const apiGatewayCloudWatchRole = new iam.Role(this, `${systemName}-ApiGatewayCloudWatchRole`, {
+    const apiGatewayCloudWatchRole = new iam.Role(this, `${props.systemName}-ApiGatewayCloudWatchRole`, {
       assumedBy: new iam.ServicePrincipal('apigateway.amazonaws.com'),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonAPIGatewayPushToCloudWatchLogs'),
@@ -70,8 +69,8 @@ export class ApiGatewayConstruct extends Construct {
     });
 
     // 指定されたVPCエンドポイントと統合するプライベートAPI Gatewayを作成します。
-    const api = new apigateway.RestApi(this, `${systemName}-ApiGateway`, {
-      restApiName: `${systemName}-ApiGateway`,
+    const api = new apigateway.RestApi(this, `${props.systemName}-ApiGateway`, {
+      restApiName: `${props.systemName}-ApiGateway`,
       deployOptions: {
         // API Gatewayデプロイのステージ名を設定します。
         stageName: AppConstants.API_PATH,
@@ -119,7 +118,7 @@ export class ApiGatewayConstruct extends Construct {
     this.apiId = api.restApiId;
     this.apiArn = api.arnForExecuteApi();
 
-    this.createVpcLinkAndIntegration(api, systemName, props.nlbArn, props.nlbDnsName);
+    this.createVpcLinkAndIntegration(api, props.systemName, props.nlbArn, props.nlbDnsName);
   }
 
   /**

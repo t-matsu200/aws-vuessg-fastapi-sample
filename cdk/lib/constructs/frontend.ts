@@ -1,4 +1,3 @@
-
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
@@ -13,6 +12,8 @@ export interface FrontendConstructProps {
    * S3バケットへのアクセスを制限するために使用されるS3 VPCエンドポイントID。
    */
   s3EndpointId: string;
+  systemName: string;
+  frontendBucketName: string;
 }
 
 /**
@@ -25,6 +26,7 @@ export class FrontendConstruct extends Construct {
    * フロントエンドアプリケーション用に作成されたS3バケットインスタンス。
    */
   public readonly bucketName: string;
+  public readonly codeBuildRoleArn: string;
 
   /**
    * FrontendConstructのインスタンスを作成します。
@@ -35,14 +37,11 @@ export class FrontendConstruct extends Construct {
   constructor(scope: Construct, id: string, props: FrontendConstructProps) {
     super(scope, id);
 
-    const systemName = this.node.tryGetContext('systemName');
+    const serverAccessLogsBucket = this.createServerAccessLogsBucket(props.systemName);
 
-    const serverAccessLogsBucket = this.createServerAccessLogsBucket(systemName);
-
-    // TODO: ALBのFQDNと同名のS3バケットを作成する必要があります
-    // https://aws.amazon.com/jp/blogs/news/internal-static-web-hosting/
     // フロントエンドアプリケーションをホストするためのS3バケットを作成します。
-    const bucket = new s3.Bucket(this, `${systemName}-FrontendAppBucket`, {
+    const bucket = new s3.Bucket(this, `${props.systemName}-FrontendAppBucket`, {
+      bucketName: props.frontendBucketName,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL, // バケットがパブリックにアクセスできないようにします。
       removalPolicy: cdk.RemovalPolicy.DESTROY, // スタック削除時にバケットとそのコンテンツを自動的に破棄します。
       autoDeleteObjects: true, // バケットが破棄されたときにオブジェクトを自動的に削除します。
@@ -53,6 +52,23 @@ export class FrontendConstruct extends Construct {
 
     // アクセスを制限し、CDK操作を許可するためにバケットポリシーを適用します。
     this.createBucketPolicies(bucket, props.s3EndpointId);
+
+    const role = new iam.Role(this, `${props.systemName}-FrontendCodeBuildRole`, {
+      assumedBy: new iam.ServicePrincipal('codebuild.amazonaws.com'),
+    });
+    bucket.grantReadWrite(role);
+    this.codeBuildRoleArn = role.roleArn;
+
+    // S3バケット名とCodeBuildロールARNをCloudFormationの出力としてエクスポート
+    new cdk.CfnOutput(this, 'FrontendBucketName', {
+      value: this.bucketName,
+      exportName: `${props.systemName}-FrontendBucketName`,
+    });
+
+    new cdk.CfnOutput(this, 'FrontendCodeBuildRoleArn', {
+      value: this.codeBuildRoleArn,
+      exportName: `${props.systemName}-FrontendCodeBuildRoleArn`,
+    });
   }
 
   /**
