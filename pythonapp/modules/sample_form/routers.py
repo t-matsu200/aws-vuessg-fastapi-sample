@@ -1,12 +1,12 @@
 
 import logging
 from fastapi import APIRouter, UploadFile, File, Form, Depends
-from common.schemas.sample_form import SampleFormCreate
+from common.schemas.sample_form import SampleFormCreate, SampleFormResponse
 
 router = APIRouter()
 logger = logging.getLogger("fastapi_app")
 
-@router.post("/submit-sample-form")
+@router.post("/submit-sample-form", response_model=SampleFormResponse)
 async def submit_sample_form(
     name: str = Form(...),
     email: str = Form(...),

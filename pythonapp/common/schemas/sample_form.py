@@ -7,3 +7,7 @@ class SampleFormCreate(BaseModel):
     email: Annotated[str, Form()]
     category: Annotated[str, Form()]
     file: Annotated[UploadFile, File()]
+
+class SampleFormResponse(BaseModel):
+    message: str
+    filename: str
