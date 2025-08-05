@@ -112,18 +112,8 @@ Resources:
             Action:
               - codedeploy:CreateDeployment
               - codedeploy:GetDeployment
-              - codedeploy:GetDeploymentGroup
-            Resource: !Sub "arn:aws:codedeploy:${AWS::Region}:${AWS::AccountId}:deploymentgroup:${CodeDeployApplicationName}/${CodeDeployDeploymentGroup}"
-          - Effect: Allow
-            Action:
               - codedeploy:GetDeploymentConfig
-            Resource: !Sub "arn:aws:codedeploy:${AWS::Region}:${AWS::AccountId}:deploymentconfig:CodeDeployDefault.*"
-          - Effect: Allow
-            Action:
-              - codedeploy:GetApplication
-              - codedeploy:GetApplicationRevision
-              - codedeploy:RegisterApplicationRevision
-            Resource: !Sub "arn:aws:codedeploy:${AWS::Region}:${AWS::AccountId}:application:${CodeDeployApplicationName}"
+            Resource: !Sub "arn:aws:codedeploy:${AWS::Region}:${AWS::AccountId}:deploymentgroup:${CodeDeployApplicationName}/${CodeDeployDeploymentGroup}""
           - Effect: Allow
             Action: ssm:GetParameter
             Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${GitHubConnectionArnParameterName}"
