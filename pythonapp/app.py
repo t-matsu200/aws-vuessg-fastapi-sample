@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from modules.sample_form.routers import router as sample_form_router
 from core.logging_config import configure_logging
 from core.middleware import TraceIdMiddleware, ProcessTimeMiddleware
@@ -43,6 +44,18 @@ def create_app() -> FastAPI:
         openapi_url="/api/openapi.json" if app_env == "development" else None
     )
     configure_logging()
+
+    # CORS settings
+    origins_str = os.getenv("CORS_ORIGINS")
+    if origins_str:
+        origins = [origin.strip() for origin in origins_str.split(',')]
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
     # Add TraceIdMiddleware
     app.add_middleware(TraceIdMiddleware)
