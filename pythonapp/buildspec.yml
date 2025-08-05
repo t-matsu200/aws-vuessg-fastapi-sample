@@ -12,12 +12,14 @@ phases:
       # Add uv to the PATH as recommended by the installer
       - . /root/.local/bin/env
       # Install main and development dependencies from pyproject.toml
+      - cd pythonapp
       - uv pip install --system -e .[dev]
 
   build:
     commands:
       - echo "Build phase started on `date`"
       # Run tests using pytest
+      - cd pythonapp
       - echo "Running tests..."
       - pytest
 
