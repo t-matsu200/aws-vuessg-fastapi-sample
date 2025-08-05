@@ -19,7 +19,6 @@ phases:
     commands:
       - echo "Build phase started on `date`"
       # Run tests using pytest
-      - cd pythonapp
       - echo "Running tests..."
       - pytest
 
