@@ -9,7 +9,8 @@ phases:
       - echo "Install phase started..."
       # Install uv, the package manager used in this project
       - curl -LsSf https://astral.sh/uv/install.sh | sh
-      - export PATH="/root/.cargo/bin:$PATH"
+      # Add uv to the PATH as recommended by the installer
+      - source /root/.local/bin/env
       # Install main and development dependencies from pyproject.toml
       - uv pip install --system -e .[dev]
 
