@@ -1,0 +1,30 @@
+# AWS CodeBuild build specification
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+    commands:
+      - echo "Install phase started..."
+      # Install uv, the package manager used in this project
+      - curl -LsSf https://astral.sh/uv/install.sh | sh
+      - export PATH="/root/.cargo/bin:$PATH"
+      # Install main and development dependencies from pyproject.toml
+      - uv pip install --system -e .[dev]
+
+  build:
+    commands:
+      - echo "Build phase started on `date`"
+      # Run tests using pytest
+      - echo "Running tests..."
+      - pytest
+
+  post_build:
+    commands:
+      - echo "Build completed on `date`"
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: 'pythonapp'
