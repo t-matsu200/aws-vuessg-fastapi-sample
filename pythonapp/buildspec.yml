@@ -4,13 +4,13 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      python: 3.12
+      python: 3.13
     commands:
       - echo "Install phase started..."
       # Install uv, the package manager used in this project
       - curl -LsSf https://astral.sh/uv/install.sh | sh
       # Add uv to the PATH as recommended by the installer
-      - source /root/.local/bin/env
+      - . /root/.local/bin/env
       # Install main and development dependencies from pyproject.toml
       - uv pip install --system -e .[dev]
 
