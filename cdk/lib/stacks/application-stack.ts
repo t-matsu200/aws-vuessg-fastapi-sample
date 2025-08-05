@@ -6,6 +6,7 @@ import { BackendConstruct } from '../constructs/backend';
 import { FrontendConstruct } from '../constructs/frontend';
 import { ApiGatewayConstruct } from '../constructs/api-gateway';
 import { AlbConstruct } from '../constructs/alb';
+import { CodeDeployConstruct } from '../constructs/codedeploy';
 
 /**
  * ApplicationStackのプロパティ。
@@ -54,6 +55,14 @@ export class ApplicationStack extends cdk.Stack {
       vpc: props.vpc,
       apiGatewayVpcEndpointSecurityGroupId: props.apiGatewayVpcEndpointSecurityGroupId,
       systemName: props.systemName,
+    });
+
+    new CodeDeployConstruct(this, 'CodeDeployConstruct', {
+      systemName: props.systemName,
+      ec2InstanceTags: {
+        'SystemName': [props.systemName],
+        'DeployTarget': ['backend-app'],
+      },
     });
 
     new FrontendConstruct(this, 'FrontendConstruct', {

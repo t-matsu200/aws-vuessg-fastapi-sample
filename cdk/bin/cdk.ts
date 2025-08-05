@@ -14,6 +14,9 @@ const devStage = new AppStage(app, 'Dev', {
   },
 });
 
+cdk.Tags.of(devStage).add('System', devConfig.systemName);
+cdk.Tags.of(devStage).add('ENV', 'Dev');
+
 const stgStage = new AppStage(app, 'Stg', {
   envConfig: stgConfig,
   env: {
@@ -21,3 +24,6 @@ const stgStage = new AppStage(app, 'Stg', {
     region: process.env.CDK_DEFAULT_REGION,
   },
 });
+
+cdk.Tags.of(stgStage).add('System', stgConfig.systemName);
+cdk.Tags.of(stgStage).add('ENV', 'Stg');

@@ -1,4 +1,5 @@
 
+import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
@@ -90,6 +91,9 @@ export class BackendConstruct extends Construct {
       role: ec2Role,
       userData: userData,
     });
+
+    // Add tags to the EC2 instance for CodeDeploy to identify it
+    cdk.Tags.of(backendEc2Instance).add('DeployTarget', 'backend-app');
 
     // バックエンドEC2インスタンスにトラフィックを分散するための内部ネットワークロードバランサー（NLB）を作成します。
     const nlb = new elbv2.NetworkLoadBalancer(this, `${props.systemName}-BackendNlb`, {
