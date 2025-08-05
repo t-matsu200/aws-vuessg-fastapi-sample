@@ -13,7 +13,7 @@ phases:
       - . /root/.local/bin/env
       # Install main and development dependencies from pyproject.toml
       - cd pythonapp
-      - uv pip install --system -e .[dev]
+      - uv sync
 
   build:
     commands:
