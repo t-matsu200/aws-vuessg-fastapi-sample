@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { HttpError } from '@/types/http';
 import { useTraceId } from '@/composables/useTraceId';
+import { useRuntimeConfig } from '#app';
 
 /**
  * HTTP リクエストを実行する関数の型定義。
@@ -48,7 +49,8 @@ const responseErrorInterceptor: HttpInterceptor = (next) => async <T>(url, optio
  * ベースURLの設定、トレースIDの自動付与、インターセプターによるエラーハンドリングを提供します。
  */
 export const useHttpClient = () => {
-  const baseURL = '/api';
+  const config = useRuntimeConfig();
+  const baseURL = (config.public.backendApiUrl || '') + '/api';
   const { setTraceId, clearTraceId } = useTraceId();
 
   /**
