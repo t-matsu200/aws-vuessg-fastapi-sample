@@ -20,7 +20,7 @@ phases:
       - echo "Build phase started on `date`"
       # Run tests using pytest
       - echo "Running tests..."
-      - pytest
+      - python -m pytest --cov=tests --cov-branch
 
   post_build:
     commands:
