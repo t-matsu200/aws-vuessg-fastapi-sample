@@ -8,6 +8,7 @@ services:
     environment:
       - NUXT_HOST=0.0.0.0
       - CHOKIDAR_USEPOLLING=true
+      - BACKEND_API_URL=http://localhost:8000
     volumes:
       - type: bind
         source: ./vueapp
@@ -32,6 +33,7 @@ services:
       - "8000:8000"
     environment:
       - APP_ENV=development
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
     depends_on:
       frontend:
         condition: service_healthy
@@ -40,18 +42,18 @@ services:
         source: ./pythonapp
         target: /app
 
-  nginx:
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
-    container_name: nginx
-    ports:
-      - "80:80"
-    depends_on:
-      frontend:
-        condition: service_healthy
-      backend:
-        condition: service_started
+  # nginx:
+  #   build:
+  #     context: ./nginx
+  #     dockerfile: Dockerfile
+  #   container_name: nginx
+  #   ports:
+  #     - "80:80"
+  #   depends_on:
+  #     frontend:
+  #       condition: service_healthy
+  #     backend:
+  #       condition: service_started
 
 volumes:
   aws-vuessg-fastapi-sample-node-modules:
