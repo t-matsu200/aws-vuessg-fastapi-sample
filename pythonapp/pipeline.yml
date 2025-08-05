@@ -20,7 +20,7 @@ Parameters:
   GitHubConnectionArnParameterName:
     Type: String
     Description: The name of the SSM Parameter Store parameter holding the CodeStar Connection ARN.
-    Default: /codepipeline/t-matsu/github-connection-arn
+    Default: /codepipeline/github-connection-arn
 
   CodeDeployApplicationName:
     Type: String
@@ -116,7 +116,11 @@ Resources:
             Resource: !Sub "arn:aws:codedeploy:${AWS::Region}:${AWS::AccountId}:deploymentgroup:${CodeDeployApplicationName}/${CodeDeployDeploymentGroup}"
           - Effect: Allow
             Action: ssm:GetParameter
-            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${GitHubConnectionArnParameterName}"
+            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${GitHubConnectionArnParameterName}" # Corrected path
+          - Sid: CodeStarConnectionAccess
+            Effect: Allow
+            Action: codestar-connections:UseConnection
+            Resource: !Sub "arn:aws:codeconnections:${AWS::Region}:${AWS::AccountId}:connection/*"
 
   # --- IAM Policy for CodeBuild --- #
   CodeBuildPolicy:
