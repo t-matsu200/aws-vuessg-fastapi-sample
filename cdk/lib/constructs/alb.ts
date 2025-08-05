@@ -146,8 +146,9 @@ export class AlbConstruct extends Construct {
       targets: s3Targets,
       healthCheck: {
         protocol: elbv2.Protocol.HTTPS,
-        path: '/',
-        healthyHttpCodes: '307,405', // S3はルートでリダイレクトには307、メソッドが許可されていない場合は405を返します。
+        path: '/index.html',
+        // S3はルートでリダイレクトには307、メソッドが許可されていない場合は405を返します。
+        healthyHttpCodes: '307,405',
         healthyThresholdCount: 2,
         unhealthyThresholdCount: 5,
         interval: cdk.Duration.seconds(30),
@@ -197,6 +198,21 @@ export class AlbConstruct extends Construct {
     const listener = internalAlb.addListener(`${systemName}-DefaultListener`, {
       port: 80,
       defaultAction: elbv2.ListenerAction.forward([s3TargetGroup])
+    });
+
+    // 末尾が"/"のアクセスをリダイレクトするルールを追加します
+    listener.addAction('RedirectRootToIndex', {
+      priority: 100,
+      conditions: [
+        // パスの末尾が "/" と完全に一致する場合にこのルールを適用します
+        elbv2.ListenerCondition.pathPatterns(['*/']),
+      ],
+      action: elbv2.ListenerAction.redirect({
+        // /index.html にリダイレクトします
+        path: '/index.html',
+        // 301（恒久的）リダイレクトを設定します
+        permanent: true,
+      }),
     });
 
     // API Gatewayの特定のホストヘッダーに基づいてトラフィックをAPI Gatewayに転送するルール。
