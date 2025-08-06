@@ -11,7 +11,6 @@ rm -rf /opt/aws-vuessg-fastapi-sample/pythonapp_old
 if [ -d "/opt/aws-vuessg-fastapi-sample/pythonapp" ]; then
     mv /opt/aws-vuessg-fastapi-sample/pythonapp /opt/aws-vuessg-fastapi-sample/pythonapp_old
 fi
-chown -R ec2-user /opt/aws-vuessg-fastapi-sample/pythonapp
 
 yum remove -y python3
 
