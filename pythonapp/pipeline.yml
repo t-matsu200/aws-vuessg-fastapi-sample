@@ -113,7 +113,7 @@ Resources:
               - codedeploy:CreateDeployment
               - codedeploy:GetDeployment
               - codedeploy:GetDeploymentConfig
-            Resource: !Sub "arn:aws:codedeploy:${AWS::Region}:${AWS::AccountId}:deploymentgroup:${CodeDeployApplicationName}/${CodeDeployDeploymentGroup}""
+            Resource: !Sub "arn:aws:codedeploy:${AWS::Region}:${AWS::AccountId}:deploymentgroup:${CodeDeployApplicationName}/${CodeDeployDeploymentGroup}"
           - Effect: Allow
             Action: ssm:GetParameter
             Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${GitHubConnectionArnParameterName}"
