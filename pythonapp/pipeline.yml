@@ -120,7 +120,7 @@ Resources:
           - Sid: CodeStarConnectionAccess
             Effect: Allow
             Action: codestar-connections:UseConnection
-            Resource: !Sub "arn:aws:codeconnections:${AWS::Region}:${AWS::AccountId}:connection/*"
+            Resource: !Sub "arn:aws:codestar-connections:${AWS::Region}:${AWS::AccountId}:connection/*"
 
   # --- IAM Policy for CodeBuild --- #
   CodeBuildPolicy:
