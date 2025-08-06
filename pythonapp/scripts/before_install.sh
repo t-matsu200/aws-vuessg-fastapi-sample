@@ -16,6 +16,7 @@ fi
 yum groupinstall -y "Development Tools"
 yum install -y bzip2 bzip2-devel gcc git libffi-devel readline readline-devel sqlite sqlite-devel zlib-devel libdb-devel gdbm-devel xz-devel tk-devel uuid-devel libuuid-devel
 yum install -y openssl-devel
+yum remove -y python3
 
 # Download, compile, and install Python 3.13 if not already present
 PYTHON_VERSION="3.13.3"
@@ -27,7 +28,7 @@ if ! (command -v python3 && python3 --version | grep -q "Python $PYTHON_VERSION"
     curl -O https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz
     tar -xzf Python-$PYTHON_VERSION.tgz
     cd Python-$PYTHON_VERSION
-    ./configure --enable-optimizations --with-ssl
+    ./configure --enable-optimizations --with-ssl --prefix=/usr/local --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib"
     make install
     # Create a symbolic link to make python3.13 the default python3
     ln -sf /usr/local/bin/python$PYTHON_VERSION_SHORT /usr/local/bin/python3
