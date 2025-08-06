@@ -5,9 +5,12 @@ chown -R ec2-user /opt/aws-vuessg-fastapi-sample/pythonapp
 
 cd /opt/aws-vuessg-fastapi-sample/pythonapp
 
-# Install dependencies globally for the python3 interpreter using uv
-# No virtual environment is used.
+# Install dependencies libraries
+su ec2-user
+source /home/ec2-user/.local/bin/env
 /home/ec2-user/.local/bin/uv sync
+
+su root
 
 # Create a systemd service file for the FastAPI application
 cat > /etc/systemd/system/fastapi-app.service << EOL
