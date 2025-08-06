@@ -29,7 +29,7 @@ if ! (command -v python3 && python3 --version | grep -q "Python $PYTHON_VERSION"
     unset CFLAGS LDFLAGS
     ./configure --enable-optimizations
     # Use 'altinstall' to avoid overwriting the system's default 'python' binary
-    make altinstall
+    make CFLAGS="" LDFLAGS="" altinstall
     # Create a symbolic link to make python3.13 the default python3
     ln -sf /usr/local/bin/python$PYTHON_VERSION_SHORT /usr/local/bin/python3
     # Clean up source files
