@@ -115,9 +115,7 @@ Resources:
           - Effect: Allow
             Action: ssm:GetParameter
             Resource: 
-              Resource: 
               - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${GitHubConnectionArnParameterName}"
-              - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${PipelineArtifactBucketParameterName}"
               - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${PipelineArtifactBucketParameterName}"
           - Sid: CodeStarConnectionAccess
             Effect: Allow
