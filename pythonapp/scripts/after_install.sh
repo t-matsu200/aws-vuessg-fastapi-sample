@@ -5,6 +5,8 @@ chown -R ec2-user /opt/aws-vuessg-fastapi-sample/pythonapp
 
 cd /opt/aws-vuessg-fastapi-sample/pythonapp
 
+rm -rf ./.venv
+
 # Install dependencies libraries
 su ec2-user
 source /home/ec2-user/.local/bin/env
