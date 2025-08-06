@@ -5,4 +5,5 @@ export const devConfig: EnvironmentConfig = {
   repositoryName: 'aws-vuessg-fastapi-sample',
   branchName: 'fix/construct',
   frontendBucketName: 'dev-t-matsu-app-frontend-bucket',
+  parameterStoreCodePipelineArtifactBucketName: '/codepipeline/t-matsu-app/dev/artifact-bucket-name',
 };

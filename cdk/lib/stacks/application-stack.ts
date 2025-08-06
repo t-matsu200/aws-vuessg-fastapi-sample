@@ -35,6 +35,7 @@ interface ApplicationStackProps extends cdk.StackProps {
    */
   systemName: string;
   frontendBucketName: string;
+  parameterStoreCodePipelineArtifactBucketName: string;
 }
 
 /**
@@ -55,6 +56,7 @@ export class ApplicationStack extends cdk.Stack {
       vpc: props.vpc,
       apiGatewayVpcEndpointSecurityGroupId: props.apiGatewayVpcEndpointSecurityGroupId,
       systemName: props.systemName,
+      parameterStoreCodePipelineArtifactBucketName: props.parameterStoreCodePipelineArtifactBucketName,
     });
 
     new CodeDeployConstruct(this, 'CodeDeployConstruct', {

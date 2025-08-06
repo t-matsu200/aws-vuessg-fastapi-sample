@@ -28,6 +28,7 @@ export class AppStage extends cdk.Stage {
       apiGatewayVpcEndpointSecurityGroupId: vpcStack.apiGatewayEndpointSgId,
       systemName: systemName,
       frontendBucketName: props.envConfig.frontendBucketName,
+      parameterStoreCodePipelineArtifactBucketName: props.envConfig.parameterStoreCodePipelineArtifactBucketName,
     });
     applicationStack.addDependency(vpcStack);
 

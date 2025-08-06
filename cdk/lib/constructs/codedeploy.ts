@@ -3,6 +3,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as codedeploy from 'aws-cdk-lib/aws-codedeploy';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as iam from 'aws-cdk-lib/aws-iam';
 
 /**
  * Props for the CodeDeployConstruct
@@ -48,7 +49,26 @@ export class CodeDeployConstruct extends Construct {
       deploymentConfig: codedeploy.ServerDeploymentConfig.ONE_AT_A_TIME,
       // Role for CodeDeploy to interact with AWS services
       // If not specified, a new role will be created with the necessary permissions.
-      // role: new iam.Role(...) 
+      role: new iam.Role(this, 'CodeDeployRole', {
+        assumedBy: new iam.ServicePrincipal('codedeploy.amazonaws.com'),
+        managedPolicies: [
+          iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSCodeDeployRole'),
+        ],
+        inlinePolicies: {
+          S3GrandRead: new iam.PolicyDocument({
+            statements: [
+              new iam.PolicyStatement({
+                actions: ['s3:GetObject', 's3:ListBucket'],
+                resources: [
+                  'arn:aws:s3:::tmatsu-fastapi-app-pipeline-artifactbucket-gyzfc53ze1qc/tmatsu-fastapi-app-p/',
+                  'arn:aws:s3:::tmatsu-fastapi-app-pipeline-artifactbucket-gyzfc53ze1qc/tmatsu-fastapi-app-p/*'
+                ],
+                effect: iam.Effect.ALLOW,
+              }),
+            ]
+          })
+        }
+      })
     });
   }
 }
