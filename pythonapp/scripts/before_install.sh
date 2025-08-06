@@ -29,7 +29,7 @@ if ! (command -v python3 && python3 --version | grep -q "Python $PYTHON_VERSION"
     /root/.local/bin/uv python install $PYTHON_VERSION --install-dir /opt/uv-python/
     chmod +x /opt/uv-python/cpython-$PYTHON_VERSION-linux-x86_64-gnu/bin/python3
     # Create a symbolic link to make python3.13 the default python3
-    rm /usr/bin/python3 /usr/local/bin/python3
+    rm -f /usr/bin/python3 /usr/local/bin/python3
     ln -s /opt/uv-python/cpython-$PYTHON_VERSION-linux-x86_64-gnu/bin/python3 /usr/bin/python3
     ln -s /opt/uv-python/cpython-$PYTHON_VERSION-linux-x86_64-gnu/bin/python3 /usr/local/bin/python3
 fi
