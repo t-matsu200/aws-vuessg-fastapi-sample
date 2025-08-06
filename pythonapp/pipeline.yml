@@ -30,20 +30,15 @@ Parameters:
     Type: String
     Description: The name of the AWS CodeDeploy deployment group.
 
-Resources:
-  ArtifactBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketEncryption:
-        ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionByDefault:
-              SSEAlgorithm: AES256
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
+  PipelineArtifactBucketParameterName:
+    Type: String
+    Description: The name of the SSM Parameter Store parameter holding the CodePipeline artifact bucket name.
 
+Conditions:
+  IsMainBranch: !Equals [!Ref GitHubBranch, 'main']
+  IsNotMainBranch: !Not [!Equals [!Ref GitHubBranch, 'main']]
+
+Resources:
   # --- IAM Role for CodePipeline --- #
   CodePipelineRole:
     Type: AWS::IAM::Role
@@ -101,8 +96,8 @@ Resources:
               - s3:PutObject
               - s3:ListBucket
             Resource: 
-              - !GetAtt ArtifactBucket.Arn
-              - !Sub "${ArtifactBucket.Arn}/*"
+              - !Sub "arn:aws:s3:::{{resolve:ssm:${PipelineArtifactBucketParameterName}}}"
+              - !Sub "arn:aws:s3:::{{resolve:ssm:${PipelineArtifactBucketParameterName}}}/*"
           - Effect: Allow
             Action:
               - codebuild:StartBuild
@@ -123,7 +118,11 @@ Resources:
             Resource: !Sub "arn:aws:codedeploy:${AWS::Region}:${AWS::AccountId}:deploymentconfig:*"
           - Effect: Allow
             Action: ssm:GetParameter
-            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${GitHubConnectionArnParameterName}"
+            Resource: 
+              Resource: 
+              - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${GitHubConnectionArnParameterName}"
+              - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${PipelineArtifactBucketParameterName}"
+              - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${PipelineArtifactBucketParameterName}"
           - Sid: CodeStarConnectionAccess
             Effect: Allow
             Action: codestar-connections:UseConnection
@@ -153,8 +152,8 @@ Resources:
               - s3:GetBucketAcl
               - s3:GetBucketLocation
             Resource:
-              - !GetAtt ArtifactBucket.Arn
-              - !Sub "${ArtifactBucket.Arn}/*"
+              - !Sub "arn:aws:s3:::{{resolve:ssm:${PipelineArtifactBucketParameterName}}}"
+              - !Sub "arn:aws:s3:::{{resolve:ssm:${PipelineArtifactBucketParameterName}}}/*"
 
   # --- CodePipeline --- #
   AppPipeline:
@@ -164,7 +163,7 @@ Resources:
       RoleArn: !GetAtt CodePipelineRole.Arn
       ArtifactStore:
         Type: S3
-        Location: !Ref ArtifactBucket
+        Location: !Sub "{{resolve:ssm:${PipelineArtifactBucketParameterName}}}"
       Stages:
         - Name: Source
           Actions:
@@ -198,6 +197,17 @@ Resources:
                 - Name: BuildArtifact
               RunOrder: 1
 
+        - Name: Approval
+          Condition: IsMainBranch
+          Actions:
+            - Name: Manual_Approval
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+              RunOrder: 1
+
         - Name: Deploy
           Actions:
             - Name: CodeDeploy_Deploy
@@ -211,4 +221,4 @@ Resources:
                 DeploymentGroupName: !Ref CodeDeployDeploymentGroup
               InputArtifacts:
                 - Name: BuildArtifact
-              RunOrder: 1
+              RunOrder: 2
