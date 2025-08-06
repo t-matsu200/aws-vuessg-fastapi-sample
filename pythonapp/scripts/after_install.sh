@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+chown -R ec2-user /opt/aws-vuessg-fastapi-sample/pythonapp
+
 cd /opt/aws-vuessg-fastapi-sample/pythonapp
 
 # Install dependencies globally for the python3 interpreter using uv
