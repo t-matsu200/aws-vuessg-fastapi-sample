@@ -34,10 +34,6 @@ Parameters:
     Type: String
     Description: The name of the SSM Parameter Store parameter holding the CodePipeline artifact bucket name.
 
-Conditions:
-  IsMainBranch: !Equals [!Ref GitHubBranch, 'main']
-  IsNotMainBranch: !Not [!Equals [!Ref GitHubBranch, 'main']]
-
 Resources:
   # --- IAM Role for CodePipeline --- #
   CodePipelineRole:
@@ -197,17 +193,6 @@ Resources:
                 - Name: BuildArtifact
               RunOrder: 1
 
-        - Name: Approval
-          Condition: IsMainBranch
-          Actions:
-            - Name: Manual_Approval
-              ActionTypeId:
-                Category: Approval
-                Owner: AWS
-                Provider: Manual
-                Version: '1'
-              RunOrder: 1
-
         - Name: Deploy
           Actions:
             - Name: CodeDeploy_Deploy
@@ -221,4 +206,4 @@ Resources:
                 DeploymentGroupName: !Ref CodeDeployDeploymentGroup
               InputArtifacts:
                 - Name: BuildArtifact
-              RunOrder: 2
+              RunOrder: 1
