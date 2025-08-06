@@ -26,6 +26,7 @@ if ! (command -v python3 && python3 --version | grep -q "Python $PYTHON_VERSION"
     curl -O https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz
     tar -xzf Python-$PYTHON_VERSION.tgz
     cd Python-$PYTHON_VERSION
+    unset CFLAGS LDFLAGS
     ./configure --enable-optimizations
     # Use 'altinstall' to avoid overwriting the system's default 'python' binary
     make altinstall
