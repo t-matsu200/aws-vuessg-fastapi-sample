@@ -28,7 +28,7 @@ if ! (command -v python3 && python3 --version | grep -q "Python $PYTHON_VERSION"
     curl -O https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz
     tar -xzf Python-$PYTHON_VERSION.tgz
     cd Python-$PYTHON_VERSION
-    ./configure --enable-optimizations --with-ssl --prefix=/usr/local --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib"
+    ./configure --enable-optimizations --with-ssl --prefix=/usr/local --enable-shared
     make install
     # Create a symbolic link to make python3.13 the default python3
     ln -sf /usr/local/bin/python$PYTHON_VERSION_SHORT /usr/local/bin/python3
