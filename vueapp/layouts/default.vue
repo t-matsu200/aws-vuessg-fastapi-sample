@@ -5,13 +5,7 @@
       <slot />
     </main>
     <AppFooter />
-    <AppDialog
-      :is-open="dialogState.isOpen"
-      :title="dialogState.title"
-      :message="dialogState.message"
-      :type="dialogState.type"
-      @close="closeDialog"
-    />
+    <AppDialog />
     <ConfirmDialog
       :is-open="confirmDialogState.isOpen"
       :title="confirmDialogState.title"
@@ -27,10 +21,8 @@ import AppHeader from '@/components/common/AppHeader.vue';
 import AppFooter from '@/components/common/AppFooter.vue';
 import AppDialog from '@/components/common/AppDialog.vue';
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue';
-import { useDialog } from '@/composables/ui/useDialog';
 import { useConfirmDialog } from '@/composables/ui/useConfirmDialog';
 
-const { dialogState, closeDialog } = useDialog();
 const { confirmDialogState, closeConfirmDialog } = useConfirmDialog();
 </script>
 

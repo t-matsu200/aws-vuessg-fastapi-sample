@@ -14,7 +14,8 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      backendApiUrl: process.env.BACKEND_API_URL || ''
+      backendApiUrl: process.env.BACKEND_API_URL || '',
+      webSocketApiEndpoint: process.env.WEBSOCKET_API_ENDPOINT || ''
     }
   }
 })

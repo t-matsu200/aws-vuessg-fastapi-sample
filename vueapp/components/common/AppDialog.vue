@@ -1,12 +1,12 @@
 <template>
-  <div v-if="isOpen" class="dialog-overlay" @click.self="closeDialog">
+  <div v-if="dialogState.isOpen" class="dialog-overlay" @click.self="closeDialog">
     <div class="dialog-content">
-      <div :class="['dialog-header', type]">
-        <h2>{{ title }}</h2>
+      <div :class="['dialog-header', dialogState.type]">
+        <h2>{{ dialogState.title }}</h2>
         <button class="close-button" @click="closeDialog">&times;</button>
       </div>
       <div class="dialog-body">
-        <p>{{ message }}</p>
+        <p>{{ dialogState.message }}</p>
       </div>
       <div class="dialog-footer">
         <button @click="closeDialog">閉じる</button>
@@ -16,30 +16,9 @@
 </template>
 
 <script setup lang="ts">
-defineProps({
-  isOpen: {
-    type: Boolean,
-    required: true,
-  },
-  title: {
-    type: String,
-    default: '通知',
-  },
-  message: {
-    type: String,
-    default: '',
-  },
-  type: {
-    type: String as PropType<'info' | 'success' | 'error' | 'warning'>,
-    default: 'info',
-  },
-});
+import { useDialog } from '~/composables/ui/useDialog';
 
-const emit = defineEmits(['close']);
-
-const closeDialog = () => {
-  emit('close');
-};
+const { dialogState, closeDialog } = useDialog();
 </script>
 
 <style scoped>

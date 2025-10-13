@@ -12,6 +12,7 @@
     <ul :class="{ 'mobile-nav-open': isMobileMenuOpen }">
       <li><NuxtLink to="/" @click="isMobileMenuOpen = false">Home</NuxtLink></li>
       <li><NuxtLink to="/sample" @click="isMobileMenuOpen = false">Sample</NuxtLink></li>
+      <li><NuxtLink to="/process" @click="isMobileMenuOpen = false">Websocket Sample</NuxtLink></li>
     </ul>
   </header>
 </template>
